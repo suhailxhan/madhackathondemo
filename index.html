@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chai Coin Toss Machine</title>
+<style>
+:root{--bg:#16121a;--card:#241d2b;--y:#FFD60A;--m:#D95CE8;--c:#22D3EE;--g:#4ADE80;--o:#FB923C;--tx:#f6f1ff;--mut:#b7aac8}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:18px/1.55 "Trebuchet MS",system-ui,sans-serif}
+h1,h2,h3{font-family:Impact,"Arial Black",system-ui,sans-serif;letter-spacing:.5px;line-height:1.1;margin:0 0 .5em}
+h1{font-size:clamp(2.6rem,7vw,5.5rem)}h2{font-size:clamp(2rem,4.5vw,3.2rem);color:var(--y)}h3{font-size:1.35rem}
+a{color:var(--c)}:focus-visible{outline:3px solid var(--y);outline-offset:3px}
+section,header{padding:70px 6vw;max-width:1500px;margin:auto}
+.card{background:var(--card);border:3px solid #000;border-radius:16px;box-shadow:0 0 0 2px #3b3147,7px 7px 0 #000;padding:20px}
+.btn{font:inherit;font-weight:800;background:var(--y);color:#000;border:3px solid #000;border-radius:12px;padding:12px 22px;box-shadow:4px 4px 0 #000;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}.btn.alt{background:var(--c)}.btn.red{background:var(--m)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+nav{position:sticky;top:0;z-index:50;background:#0e0b12ee;backdrop-filter:blur(6px);display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;padding:10px 4vw;border-bottom:3px solid #000}
+nav b{color:var(--y);margin-right:auto}nav a{color:var(--tx);text-decoration:none;font-size:.9rem;font-weight:700}nav a:hover{color:var(--y)}
+nav button{font:inherit;font-size:.85rem;font-weight:800;background:var(--m);border:2px solid #000;border-radius:8px;padding:4px 10px;cursor:pointer}
+.badge{display:inline-block;background:var(--m);color:#000;font-weight:800;border:3px solid #000;border-radius:99px;padding:4px 16px;box-shadow:3px 3px 0 #000;font-size:.95rem}
+#hero{display:grid;grid-template-columns:1.4fr 1fr;gap:30px;align-items:center;min-height:80vh}
+#hero p.tag{font-size:1.5rem;color:var(--c);font-weight:700}
+.big{font-family:Impact,sans-serif;font-size:clamp(2rem,4.5vw,3.4rem);color:var(--y);margin:14px 0 24px}
+.coinwrap{perspective:900px;display:grid;place-items:center}
+.coin{width:min(260px,60vw);aspect-ratio:1;position:relative;transform-style:preserve-3d;animation:flip 3.2s ease-in-out infinite}
+.coin div{position:absolute;inset:0;border-radius:50%;border:8px solid #000;display:grid;place-items:center;font:900 6rem Impact,sans-serif;backface-visibility:hidden;box-shadow:inset 0 0 0 10px #b8940a}
+.coin .f{background:var(--y);color:#000}.coin .b{background:var(--c);transform:rotateY(180deg)}
+@keyframes flip{0%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-60px) rotateY(900deg)}100%{transform:translateY(0) rotateY(1800deg)}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.stat{font:900 3.4rem Impact,sans-serif;color:var(--y)}.stat.m{color:var(--m)}.row{display:flex;flex-wrap:wrap;gap:22px;margin-top:10px}
+.row small{display:block;color:var(--mut)}
+#scr{overflow-x:auto;padding-bottom:6px}#flow{display:block}
+.node{cursor:pointer}.node circle{fill:#2a2233;stroke:var(--col);stroke-width:4;transition:fill .3s}
+.node.done circle{fill:var(--col);opacity:.55}.node.on circle{fill:var(--col);filter:drop-shadow(0 0 14px var(--col))}
+.node text{fill:#fff;font:800 19px system-ui;pointer-events:none}.node .lab{font-size:13px;font-weight:600}
+.node.on .num,.node.done .num{fill:#000}.lit{stroke:#fff!important}
+#tip{min-height:58px;margin-top:10px;border-left:6px solid var(--y);padding:8px 14px;background:#1d1724;border-radius:6px}
+.ctrl{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:18px 0}
+select{font:inherit;padding:8px;border-radius:8px;border:3px solid #000;background:#fff}
+.cnt{font:900 2.2rem Impact,sans-serif;color:var(--g);margin-left:auto}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px;margin-top:20px}
+#log{height:300px;overflow:auto;font:14px/1.5 Consolas,monospace;background:#0b090e;border-radius:10px;padding:10px;color:#cfe}
+#log div{border-bottom:1px dashed #2d2538}#log span{color:var(--c)}
+#oled{background:#000;border:6px solid #444;border-radius:8px;padding:14px;font:700 1.35rem/1.35 "Courier New",monospace;color:#9ff;min-height:130px;text-shadow:0 0 6px #4cf}
+#oled .w{color:#fff;font-size:1.6rem}
+#chat{background:#0e1621;border-radius:12px;padding:10px;min-height:150px;font-size:.95rem}
+.msg{background:#2b5278;border-radius:12px;padding:8px 12px;margin:6px 0;max-width:90%}.msg.me{background:#1f6b3a;margin-left:auto}
+.mar{width:100%;max-height:360px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+.flip{perspective:900px;height:260px}.fi{position:relative;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.flip:hover .fi,.flip:focus-within .fi,.flip.t .fi{transform:rotateY(180deg)}
+.fi>div{position:absolute;inset:0;backface-visibility:hidden;overflow:auto}.fi .bk{transform:rotateY(180deg);background:#2f2438}
+.fi svg{width:64px;height:64px}.fi h3{margin:6px 0 2px;font-size:1.15rem}.fi p{margin:4px 0;font-size:.85rem;color:var(--mut)}
+.pr{color:var(--y);font-weight:800}
+#tot{margin-top:24px;font-size:1.3rem}
+table{border-collapse:collapse;width:100%;font-size:.95rem}th,td{border:2px solid #000;padding:6px 10px;text-align:left}th{background:var(--y);color:#000}td{background:#241d2b}
+.layer{border:3px solid #000;border-radius:12px;padding:12px 16px;margin:10px 0;font-weight:700;box-shadow:4px 4px 0 #000;color:#000}
+.nr{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}.nr span{background:#3b2f48;border:3px solid #000;border-radius:8px;padding:6px 10px;font-size:.9rem;font-weight:700}.nr i{font-style:normal;color:var(--y)}
+details{margin:10px 0}summary{cursor:pointer;font-weight:800;color:var(--c)}pre{background:#0b090e;padding:14px;border-radius:10px;overflow:auto;font-size:.85rem;color:#cfe}
+.chk .t{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#333;color:#333;font-weight:900;margin-right:8px;transition:.5s}
+.chk.in .t{background:var(--g);color:#000;transform:rotate(360deg)}
+.meter{height:42px;background:#000;border-radius:99px;border:3px solid #000;overflow:hidden;margin-top:22px}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g),var(--y),var(--m));transition:width 2.5s;text-align:right;padding-right:14px;font-weight:900;color:#000;line-height:36px}
+.tl{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.tl div{background:#3b2f48;border:3px solid #000;border-radius:10px;padding:10px 14px;font-weight:700}.tl div.x{background:var(--m);color:#000}
+footer{text-align:center;padding:40px 6vw;border-top:3px solid #000;color:var(--mut)}
+body.pres nav,body.pres header,body.pres main>section:not(#sim),body.pres footer{display:none}
+body.pres #sim{max-width:none;padding:24px 3vw;font-size:22px;min-height:100vh;background:var(--bg);overflow:auto}
+@media(max-width:800px){#hero,.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+#v3{position:relative;height:min(84vh,860px);border:3px solid #000;border-radius:16px;overflow:hidden;background:#16121a;box-shadow:0 0 0 2px #3b3147,7px 7px 0 #000}
+#v3 iframe{display:block;width:100%;height:100%;border:0;background:#16121a}
+#v3:fullscreen{height:100vh;border:0;border-radius:0}
+#v3.fsfake{position:fixed;inset:0;z-index:9999;height:100vh!important;border:0;border-radius:0}
+#v3x{display:none;position:absolute;right:12px;bottom:12px;z-index:5}#v3.fsfake #v3x{display:block}
+</style>
+</head>
+<body>
+<nav id="nav"><b>☕ Chai Coin Toss</b><a href="#hero">Home</a><a href="#why">Problem</a><a href="#sim">Simulation</a><a href="#model3d">3D Model</a><a href="#comps">Components</a><a href="#hw">Hardware</a><a href="#sw">Software</a><a href="#judge">Criteria</a><a href="#safe">Fail-safe</a><a href="#team">Team</a><button id="pbtn" aria-label="Presentation mode (P)">Present (P)</button></nav>
+
+<main>
+<header id="hero">
+ <div>
+  <span class="badge">Over-Engineered Solutions</span>
+  <h1 style="margin-top:16px">Chai Coin Toss Machine</h1>
+  <p class="tag">One coin flip. Twenty-one steps. Zero reason.</p>
+  <div class="big"><span data-count="21">21</span> steps instead of 1</div>
+  <a class="btn" href="#sim">Run Live Simulation</a>
+ </div>
+ <div class="coinwrap" aria-hidden="true"><div class="coin"><div class="f">₹</div><div class="b">?</div></div></div>
+</header>
+
+<section id="why">
+ <h2>The problem vs our solution</h2>
+ <div class="two">
+  <div class="card"><h3>Normal way</h3><p>Flip a coin. Loser pays for chai.</p>
+   <div class="row"><div><div class="stat"><span data-count="1">0</span></div><small>step</small></div><div><div class="stat"><span data-count="1">0</span></div><small>second</small></div><div><div class="stat"><span data-count="0">0</span></div><small>servers</small></div></div></div>
+  <div class="card"><h3>Our way</h3><p>Two ESP32s, cloud MQTT, two random APIs, a Telegram vote and a marble run.</p>
+   <div class="row"><div><div class="stat m"><span data-count="21">0</span></div><small>steps</small></div><div><div class="stat m"><span data-count="2">0</span></div><small>ESP32 boards</small></div><div><div class="stat m"><span data-count="2">0</span></div><small>random APIs</small></div><div><div class="stat m"><span data-count="3">0</span></div><small>servos</small></div></div></div>
+ </div>
+</section>
+
+<section id="sim">
+ <h2>Live simulation</h2>
+ <p>Click <b>START</b> (it acts as Button 1). Hover or tap any node to see what it does.</p>
+ <div class="ctrl">
+  <button class="btn" id="go">START</button><button class="btn red" id="rs">Reset</button>
+  <label>Speed <select id="spd"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select></label>
+  <label>Result <select id="frc"><option value="R">Random</option><option value="L">Force Left</option><option value="X">Force Right</option></select></label>
+  <div class="cnt" id="cnt" aria-live="polite">Step 0 / 21</div>
+ </div>
+ <div class="card"><div id="scr"></div><div id="tip">Press START to begin. Hover a node for details.</div></div>
+ <div class="grid3">
+  <div class="card"><h3>Marble run</h3><svg class="mar" id="mar" viewBox="0 0 300 350" aria-label="Marble run animation"></svg></div>
+  <div class="card"><h3>OLED display</h3><div id="oled"><div>STEP 00/21</div><div>READY</div></div>
+   <h3 style="margin-top:18px">Telegram</h3><div id="chat"></div><button class="btn alt" id="ok" disabled style="margin-top:10px">Approve</button></div>
+  <div class="card"><h3>Log</h3><div id="log"></div></div>
+ </div>
+</section>
+
+<section id="model3d"><h2>3D product model</h2>
+ <p>Drag to rotate, scroll to zoom, click any part, explode the layers, then play the simulation. (Needs internet once to load Three.js.)</p>
+ <div id="v3"><iframe id="v3f" title="Chai Coin Toss Machine 3D viewer" sandbox="allow-scripts" allow="fullscreen; autoplay"></iframe><button class="btn red" id="v3x">Exit full screen</button></div>
+ <p style="margin-top:14px"><button class="btn alt" id="v3fs">Full screen 3D</button></p>
+ <script type="text/plain" id="v3src"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chai Coin Toss Machine - 3D Viewer</title>
+<style>
+:root{--y:#FFD60A;--m:#D95CE8;--c:#22D3EE;--g:#4ADE80;--bg:#16121a}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:#f3eef7;font:14px/1.4 system-ui,sans-serif;overflow:hidden;color-scheme:dark}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+.g{background:rgba(32,25,40,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.13);border-radius:14px}
+button,select{font:inherit;color:inherit;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:6px 10px;cursor:pointer}
+button:hover{background:rgba(255,255,255,.18)}button.on{background:var(--y);color:#111}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6))}
+#top{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));display:flex;gap:6px;align-items:center;padding:8px 12px;overflow-x:auto;white-space:nowrap}
+#top h1{font-size:16px;margin:0 auto 0 0;color:var(--y)}
+#left{position:fixed;left:8px;top:calc(66px + env(safe-area-inset-top,0px));width:210px;padding:10px 12px}
+#left summary{cursor:pointer;font-weight:600}
+#left label{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+#left input[type=checkbox]{display:none}#left i::before{content:"\1F441"}#left input:not(:checked)+i{opacity:.3}
+#left input[type=range]{width:100%}
+#info{position:fixed;right:8px;top:calc(66px + env(safe-area-inset-top,0px));width:330px;max-height:calc(100% - 170px);overflow:auto;padding:14px;display:none}
+#info.on{display:block}#info h2{margin:8px 0 4px;font-size:19px;color:var(--c)}
+.tag{font-size:11px;background:var(--m);color:#111;border-radius:6px;padding:1px 7px}
+.f{margin-top:8px}.f b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--y)}
+#bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 16px)}
+#bar input[type=range]{width:200px}
+#cap{position:fixed;left:0;right:0;bottom:calc(92px + env(safe-area-inset-bottom,0px));text-align:center;font-size:20px;text-shadow:0 2px 12px #000;pointer-events:none;transition:opacity .4s}
+#stp{position:fixed;right:14px;bottom:calc(100px + env(safe-area-inset-bottom,0px));font-weight:700;color:var(--g);pointer-events:none}
+#title,#tag{position:fixed;left:0;right:0;text-align:center;pointer-events:none;transition:opacity .8s;opacity:0}
+#title{top:22%;font-size:clamp(28px,6vw,64px);font-weight:800;color:var(--y);text-shadow:0 4px 30px #000}
+#tag{top:14%;font-size:clamp(20px,4vw,44px);font-weight:700;color:var(--m);text-shadow:0 4px 30px #000}
+#list{position:fixed;left:8px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:210px;max-height:45%;overflow:auto;padding:8px;display:none}
+#list.on{display:block}#list button{display:block;width:100%;text-align:left;margin:2px 0;font-size:12px}
+#tip{position:fixed;pointer-events:none;padding:3px 9px;background:rgba(0,0,0,.7);border-radius:8px;font-size:12px;display:none}
+#hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:10px 18px;transition:opacity 1s;pointer-events:none}
+#load{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;font-size:22px;color:var(--y);z-index:9;transition:opacity .5s}
+#load div{width:180px;height:4px;background:#333;border-radius:3px;overflow:hidden}#load div::after{content:"";display:block;height:100%;width:40%;background:var(--c);animation:l 1s infinite}
+@keyframes l{from{margin-left:-40%}to{margin-left:100%}}
+body.pres .ui{display:none}
+@media(max-width:700px){#info{left:8px;right:8px;top:auto;bottom:calc(112px + env(safe-area-inset-bottom,0px));width:auto;max-height:36%}#left{width:170px}#bar input[type=range]{width:120px}#cap{font-size:16px}}
+</style></head><body>
+<div id="vig"></div>
+<div id="load">Chai Coin Toss Machine<div></div></div>
+<div id="top" class="g ui"><h1>Chai Coin Toss Machine</h1>
+<button data-v="front">Front</button><button data-v="top">Top</button><button data-v="side">Side</button><button data-v="iso">Isometric</button><button id="reset">Reset</button><button id="auto">Auto-rotate</button><button id="lst">Parts</button><button id="pres">Present (P)</button></div>
+<div id="left" class="g ui"><details open><summary>Layers + Explode</summary><div id="lay" style="margin-top:6px"></div>
+<div style="margin-top:8px">Explode <span id="exv">0</span>%<input id="ex" type="range" min="0" max="100" value="0"></div>
+<button id="asm" style="margin-top:6px;width:100%">Disassemble</button></details></div>
+<div id="info" class="g ui"></div>
+<div id="list" class="g ui"></div>
+<div id="bar" class="g ui"><button id="play">&#9654; Play Simulation</button><button id="rst">&#8634;</button>
+<select id="spd"><option value=".5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select>
+<select id="res"><option value="0">Result: Random</option><option value="-1">Force Left</option><option value="1">Force Right</option></select>
+<select id="cam"><option value="cin">Camera: Cinematic</option><option value="free">Camera: Free</option></select>
+<input id="scr" type="range" min="0" max="50" step=".05" value="0"></div>
+<div id="title">Chai Coin Toss Machine</div><div id="tag">One coin flip. Twenty-one steps. Zero reason.</div>
+<div id="cap"></div><div id="stp"></div><div id="tip"></div>
+<div id="hint" class="g ui">Drag to rotate &middot; Click a part &middot; Explode &middot; Play simulation</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
+<script>
+/* ================= CONFIG & DATA ================= */
+const CFG={project:'Chai Coin Toss Machine',tagline:'One coin flip. Twenty-one steps. Zero reason.'};
+// layer key, label, explode lift
+const LAYERS=[['structure','Structure',4],['electronics','Electronics',8],['actuators','Actuators',12],['sensors','Sensors & Display',16],['wiring','Wiring',20],['software','Software',14]];
+// id, name, layer, function, steps, connected to, specs, price, free tools
+const RAW=[
+['esp1','ESP32 #1 Controller','electronics','Reads the start button, publishes the request over Wi-Fi/MQTT, drives the OLED and the status LEDs.','1-3','Button GPIO 4, Reset GPIO 5, OLED SDA 21 / SCL 22, LEDs 25/26/27/32/33','Dual-core 240 MHz, Wi-Fi + BLE, 3.3 V','Rs 450','Arduino IDE, PubSubClient, Adafruit SSD1306'],
+['esp2','ESP32 #2 Mechanism','electronics','Receives the approved command, drives the three servos, reads both IR sensors and rings the bell.','11-18','Servo A 13, Servo B 12, Servo C 14, IR1 34, IR2 35, Buzzer 18','Dual-core 240 MHz, Wi-Fi, 3.3 V logic','Rs 450','Arduino IDE, ESP32Servo, PubSubClient'],
+['servoA','SG90 Micro Servo, Servo A (release)','actuators','Releases the coin from the tower cradle.','12','ESP32 #2, GPIO 13','5 V, 180 degrees, 1.8 kg-cm torque','Rs 150','ESP32Servo library'],
+['servoB','SG90 Micro Servo, Servo B (gate)','actuators','Flips the gate to route the coin left or right.','14','ESP32 #2, GPIO 12','5 V, 180 degrees, 1.8 kg-cm torque','Rs 150','ESP32Servo library'],
+['servoC','SG90 Micro Servo, Servo C (lever)','actuators','Swings the lever so it strikes the bell.','18','ESP32 #2, GPIO 14','5 V, 180 degrees, 1.8 kg-cm torque','Rs 150','ESP32Servo library'],
+['ir1','IR Sensor 1 (path confirm)','sensors','Confirms the coin took the chosen path.','15','ESP32 #2, GPIO 34','3.3-5 V, digital out, 2-30 cm','Rs 60','Arduino digitalRead / interrupts'],
+['ir2','IR Sensor 2 (lever confirm)','sensors','Detects the coin reaching the lever.','17','ESP32 #2, GPIO 35','3.3-5 V, digital out, 2-30 cm','Rs 60','Arduino digitalRead / interrupts'],
+['oled','OLED 0.96" (SSD1306)','sensors','Live step counter, the winner and the complexity score.','19-20','ESP32 #1 I2C (SDA 21, SCL 22)','128x64, I2C, 3.3-5 V','Rs 250','Adafruit SSD1306 + GFX'],
+['btn1','Push Button (start)','sensors','Starts the whole chain.','1','ESP32 #1, GPIO 4','Momentary, 12 mm','Rs 20','INPUT_PULLUP'],
+['btn2','Push Button (reset)','sensors','Resets the machine.','','ESP32 #1, GPIO 5','Momentary, 6 mm','Rs 10','INPUT_PULLUP'],
+['buzzer','Buzzer','sensors','Announces the result.','18','ESP32 #2, GPIO 18','5 V active buzzer','Rs 30','tone()'],
+['leds','Status LEDs (x5)','sensors','One LED lights per stage of the chain.','all','ESP32 #1, GPIO 25/26/27/32/33','5 mm, with 220 ohm resistors','Rs 10',''],
+['bb1','Breadboard 1','electronics','Wiring for the controller side.','','ESP32 #1','400 tie points','Rs 70',''],
+['bb2','Breadboard 2','electronics','Wiring for the mechanism side.','','ESP32 #2','400 tie points','Rs 70',''],
+['power','5V Power Supply','electronics','Powers the servos separately from the ESP32.','','Common ground with ESP32','5 V, 2 A','Rs 300',''],
+['base','Wooden Base Board','structure','Carries the whole prototype.','','','60 x 40 cm','Rs 200',''],
+['track','Coin Track','structure','Foam-board channel with a Y-split that rejoins at the lever.','13-16','','Foam board, 2 cm channel','Rs 100',''],
+['tower','Release Tower','structure','Raised holder with a cradle that tips the coin onto the track.','12','Servo A','Foam board','Rs 30',''],
+['gate','Gate Flap','structure','Pivoting flap at the Y-split that sends the coin left or right.','14','Servo B','Foam board','Rs 10',''],
+['lever','Lever','structure','Pivoting arm hit by the coin. Servo C swings it into the bell.','17-18','Servo C','Foam board','Rs 10',''],
+['bell','Brass Bell + Stand','structure','Rings when struck by the lever.','18','','Brass bell','Rs 80',''],
+['marble','Coin','structure','The coin of this machine. It rolls on its edge, is tossed over the Y-split and lands on the chosen side.','12-16','','25 mm gold-finish coin, about 1.4 mm thick','Rs 10',''],
+['mqtt','MQTT Broker','software','Carries the request from ESP32 #1 to Node-RED.','3-4','Wi-Fi','Lightweight pub/sub','Free','Mosquitto / HiveMQ'],
+['nodered','Node-RED','software','Orchestrates the whole decision flow.','4-10','Wi-Fi, MQTT','Flow-based tool','Free','Node-RED'],
+['api1','Random API 1','software','Returns a random number for the vote.','5-6','HTTP from Node-RED','Free public API','Free',''],
+['api2','Random API 2','software','Returns a second random number for the vote.','7-8','HTTP from Node-RED','Free public API','Free',''],
+['vote','Majority Vote','software','API 1, API 2 and the ESP32 random bit vote. Two of three decides Left or Right.','9','Node-RED function','3-way majority','Free','JavaScript'],
+['tg','Telegram Bot','software','Asks friends to approve the toss before the coin is released.','10-11','Node-RED Telegram node','Bot API','Free','node-red-contrib-telegrambot']];
+const DATA=RAW.map(a=>({id:a[0],name:a[1],layer:a[2],fn:a[3],steps:a[4],conn:a[5],specs:a[6],price:a[7],tools:a[8]}));
+const STEPS=[3.2,3.8,4.5,5.5,6.8,8.3,9.8,10.5,11.5,12.5,14,15,16.4,18,19.2,20.5,22.5,24,26.5,28.8,31];
+const CAPS=[[0,''],[3,'Start button pressed'],[4.5,'ESP32 #1 sends the request over Wi-Fi'],[6.5,'MQTT to Node-RED'],[9,'Two random APIs + the chip cast their votes'],[12.3,'Majority vote decided'],[14,'Asking friends on Telegram'],[16.5,'Approval received'],[18.2,'ESP32 #2 wakes the mechanism'],[19.3,'Gate set'],[20.5,'Coin released'],[24,'IR sensor 1 confirms the path'],[27,'IR sensor 2 confirms the lever'],[28.8,'Lever strikes the bell'],[31,'Result on the OLED'],[35,'']];
+const KF=[[0,[56,34,62],[0,5,0]],[2.6,[-30,10,22],[-24,1,8]],[5,[-36,10,8],[-21,1,0]],[8,[-12,28,40],[-2,18,-4]],[15,[2,30,36],[6,19,-2]],[19,[30,15,30],[14,2,8]],[21,[-18,15,12],[-8,8,-4]],[24,[10,12,18],[12,3.5,-4]],[27,[30,9,10],[25,2,-4]],[30,[44,9,6],[34,2.5,-6]],[33,[-12,10,8],[-23,3,-10]],[36.5,[58,36,58],[4,5,0]],[40,[40,28,40],[6,10,-14]],[43,[12,18,12],[6,17,-38]],[50,[12,18,12],[6,17,-38]]];
+const TD=18,T=50+TD,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= SCENE SETUP ================= */
+const $=s=>document.querySelector(s),V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),ez=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},lin=(t,a,b)=>cl((t-a)/(b-a)),pr=(t,a,b)=>ez(lin(t,a,b));
+const R=new THREE.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;R.outputEncoding=THREE.sRGBEncoding;document.body.prepend(R.domElement);
+const S=new THREE.Scene();S.background=new THREE.Color(0x16121a);S.fog=new THREE.Fog(0x5b6f94,150,330);
+const C=new THREE.PerspectiveCamera(40,1,.1,600);C.position.set(58,40,62);
+const OC=new THREE.OrbitControls(C,R.domElement);OC.enableDamping=true;OC.dampingFactor=.08;OC.minDistance=4;OC.maxDistance=150;OC.maxPolarAngle=Math.PI/2-.03;OC.target.set(4,4,0);OC.autoRotateSpeed=1.2;
+// studio reflections for steel / brass
+{const pm=new THREE.PMREMGenerator(R),es=new THREE.Scene();es.add(new THREE.Mesh(new THREE.SphereGeometry(50,16,8),new THREE.MeshBasicMaterial({color:0x2a2433,side:THREE.BackSide})));
+[[0,42,0,6],[40,10,20,3],[-40,15,-20,2.5]].forEach(([x,y,z,k])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(24,2,24),new THREE.MeshBasicMaterial());m.material.color.setRGB(k,k,k*.95);m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)});
+S.environment=pm.fromScene(es).texture}
+S.add(new THREE.HemisphereLight(0xcfd8ff,0x3a5a3a,.8));
+const key=new THREE.DirectionalLight(0xfff2dd,1.3);key.position.set(30,60,35);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-55,right:55,top:55,bottom:-55,near:1,far:200});key.shadow.bias=-.0004;S.add(key);
+const rim=new THREE.PointLight(0xd95ce8,.8,160);rim.position.set(-50,25,-30);S.add(rim);const rim2=new THREE.PointLight(0x22d3ee,.7,160);rim2.position.set(50,20,-35);S.add(rim2);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(160,48),new THREE.MeshStandardMaterial({color:0x201a28,roughness:.35,metalness:.2}));floor.rotation.x=-Math.PI/2;floor.position.y=-2.02;floor.receiveShadow=true;S.add(floor);
+function resize(){R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.fov=C.aspect<1?62:40;C.updateProjectionMatrix()}addEventListener('resize',resize);resize();
+
+/* ================= MATERIALS ================= */
+const cv=(w,h,f)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t};
+const M=(c,r=.7,m=0,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:m},o));
+const woodT=cv(256,256,(x,w,h)=>{x.fillStyle='#9c6b3a';x.fillRect(0,0,w,h);for(let i=0;i<90;i++){x.strokeStyle='rgba('+(50+Math.random()*50|0)+',32,14,.2)';x.lineWidth=1+Math.random()*2;const y=Math.random()*h;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(w*.3,y+6,w*.6,y-6,w,y+2);x.stroke()}});
+const gridT=cv(128,64,(x,w,h)=>{x.fillStyle='#efefea';x.fillRect(0,0,w,h);x.fillStyle='#3a3a3a';for(let i=6;i<w-4;i+=5)for(let j=14;j<h-12;j+=5)if(Math.abs(j-h/2)>3)x.fillRect(i,j,2,2);x.fillStyle='#d33';x.fillRect(4,6,w-8,2);x.fillStyle='#36c';x.fillRect(4,h-8,w-8,2)});
+const glowT=cv(64,64,(x)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64)});
+const mat={wood:M(0xffffff,.7,0,{map:woodT}),foam:M(0xf2efe6,.95),steel:M(0xe3e7ee,.06,1),pcb:M(0x0b6b3a,.5,.2),black:M(0x161616,.5,.1),servo:M(0x1f6fd6,.45),white:M(0xf4f4f4,.5),brass:M(0xc9a227,.28,.9,{side:THREE.DoubleSide}),silver:M(0xc8ccd2,.3,.9),gold:M(0xd4af37,.3,.9),red:M(0xd62828,.4)};
+
+/* ================= BUILD HELPERS + REGISTRY ================= */
+const mk=()=>new THREE.Group();
+const box=(w,h,d,m,x=0,y=0,z=0,g)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g&&g.add(o);return o};
+const cyl=(rt,rb,h,m,x=0,y=0,z=0,g,s=20)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g&&g.add(o);return o};
+const sph=(r,m,x=0,y=0,z=0,g)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),m);o.position.set(x,y,z);o.castShadow=true;g&&g.add(o);return o};
+const glow=(col,sz,x,y,z,g)=>{const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowT,color:col,blending:THREE.AdditiveBlending,transparent:true,opacity:0,depthWrite:false}));s.scale.set(sz,sz,1);s.position.set(x,y,z);g.add(s);return s};
+const P={},ALL=[],layerG={},LI={},LIFT={};
+LAYERS.forEach(([k,n,l],i)=>{layerG[k]=mk();S.add(layerG[k]);LI[k]=i;LIFT[k]=l});
+function prep(m,pid){m.material=m.material.clone();m.userData={pid,e0:m.material.emissive?m.material.emissive.clone():null,o0:m.material.opacity,t0:m.material.transparent};ALL.push(m)}
+function reg(id,inner,layer){
+  const info=DATA.find(d=>d.id===id)||{},b=new THREE.Box3().setFromObject(inner),c=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3());
+  inner.position.sub(c);const w=mk();w.position.copy(c);w.add(inner);layerG[layer].add(w);
+  const meshes=[];inner.traverse(o=>{if(o.isMesh){prep(o,id);meshes.push(o)}});
+  const hm=layer==='software'?LIFT.software:LIFT[layer];
+  P[id]=Object.assign({},info,{id,layer,w,inner,meshes,home:c.clone(),size:sz,off:V3(id==='base'?0:c.x*.12,id==='base'?0:hm,id==='base'?0:c.z*.12),pop:false,popPos:V3(0,0,0)});
+  return P[id]}
+
+/* ================= BUILD MODEL (one block per part) ================= */
+// base board
+{const g=mk();box(76,2,44,mat.wood,4,-1,0,g);reg('base',g,'structure')}
+// track with Y-split
+const PT={T0:[-8,9,-4],T1:[0,7,-4],S:[8,5,-4],L1:[13,4.2,-9],L2:[18,3.2,-9],R1:[13,4.2,1],R2:[18,3.2,1],J:[23,2.2,-4],E:[30,1.3,-4]},PV={};for(const k in PT)PV[k]=V3(...PT[k]);
+{const g=mk(),X=V3(1,0,0);
+ const ch=(a,b)=>{const d=b.clone().sub(a),l=d.length(),s=mk();s.position.copy(a).add(b).multiplyScalar(.5);s.quaternion.setFromUnitVectors(X,d.normalize());box(l+.15,.2,2.2,mat.foam,0,-.6,0,s);box(l+.15,1.2,.18,mat.foam,0,0,1.1,s);box(l+.15,1.2,.18,mat.foam,0,0,-1.1,s);g.add(s)};
+ [['T0','T1'],['T1','S'],['S','L1'],['L1','L2'],['L2','J'],['S','R1'],['R1','R2'],['R2','J'],['J','E']].forEach(([a,b])=>ch(PV[a],PV[b]));
+ ['T1','S','L1','L2','R1','R2','J','E'].forEach(k=>{const p=PV[k];cyl(.3,.3,p.y-.7,mat.foam,p.x,(p.y-.7)/2,p.z,g,12)});reg('track',g,'structure')}
+// release tower + cradle
+const CR=mk();
+{const g=mk();box(2,8.4,2.6,mat.foam,-10.8,4.2,-4,g);CR.position.set(-9.8,8.4,-4);box(3.9,.2,2.2,mat.foam,1.95,0,0,CR);box(3.9,.5,.15,mat.foam,1.95,.3,1.1,CR);box(3.9,.5,.15,mat.foam,1.95,.3,-1.1,CR);box(.15,1,2.2,mat.foam,.8,.6,0,CR);g.add(CR);reg('tower',g,'structure')}
+// gate
+const GATE=mk();
+{const g=mk();GATE.position.set(8.5,5,-4);box(3,.9,.12,mat.white,1.5,0,0,GATE);cyl(.1,.1,1.6,mat.silver,0,-.8,0,GATE,10);g.add(GATE);reg('gate',g,'structure')}
+// lever
+const LV=mk();
+{const g=mk();LV.position.set(31,2.7,-4);box(.3,.25,5,mat.white,0,0,-2.5,LV);box(.25,1.8,.5,mat.red,0,-1.05,-.9,LV);g.add(LV);reg('lever',g,'structure')}
+// bell + stand
+const BP=mk(),bellMesh=[];
+{const g=mk();cyl(.3,.3,5.6,mat.foam,38,2.8,-7.5,g,12);box(3.4,.3,.3,mat.foam,36.3,5.45,-7.5,g);BP.position.set(35,5.2,-7.5);cyl(.04,.04,.8,mat.silver,0,-.4,0,BP,6);
+ const b=new THREE.Mesh(new THREE.LatheGeometry([[.05,1],[.35,.95],[.6,.6],[.75,0],[.95,-.7],[1.1,-1]].map(a=>new THREE.Vector2(a[0],a[1])),28),mat.brass);b.position.y=-2.3;b.castShadow=true;BP.add(b);sph(.25,mat.brass,0,-3.2,0,BP);g.add(BP);reg('bell',g,'structure')}
+// marble
+const COIN_R=.9,COIN_T=.14,COIN_DY=COIN_R-.5;
+{const g=mk(),face=(txt,col)=>cv(128,128,(x,w,h)=>{const gr=x.createRadialGradient(64,64,8,64,64,64);gr.addColorStop(0,'#ffe27a');gr.addColorStop(1,'#c9a227');x.fillStyle=gr;x.fillRect(0,0,w,h);x.strokeStyle='#8a6d10';x.lineWidth=6;x.beginPath();x.arc(64,64,56,0,7);x.stroke();x.fillStyle=col;x.font='bold 74px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,64,70)});
+ const side=cyl(COIN_R,COIN_R,COIN_T,mat.gold,0,0,0,g,48);side.rotation.x=Math.PI/2;
+ [[face('\u20B9','#7a5c00'),COIN_T/2+.004,0],[face('?','#7a5c00'),-COIN_T/2-.004,Math.PI]].forEach(([t,z,ry])=>{const m=new THREE.Mesh(new THREE.CircleGeometry(COIN_R*.97,48),new THREE.MeshStandardMaterial({map:t,roughness:.35,metalness:.7}));m.position.z=z;m.rotation.y=ry;m.castShadow=true;g.add(m)});
+ g.position.set(PV.T0.x,PV.T0.y+COIN_DY,PV.T0.z);reg('marble',g,'structure')}
+// servos
+function servo(){const g=mk();box(2.3,2.2,1.2,mat.servo,0,0,0,g);box(3.2,.2,1.2,mat.servo,0,.7,0,g);cyl(.35,.35,.5,mat.white,0,1.35,0,g,12);const h=mk();h.position.y=1.65;box(2.2,.18,.45,mat.white,.9,0,0,h);cyl(.3,.3,.2,mat.white,0,0,0,h,12);g.add(h);g.horn=h;box(.4,.5,.6,mat.black,-1.3,-.5,0,g);return g}
+const SA=servo(),SB=servo(),SC=servo();
+SA.rotation.x=Math.PI/2;SA.position.set(-10.8,9,-4);reg('servoA',SA,'actuators');
+SB.position.set(8.5,2.2,-4);reg('servoB',SB,'actuators');
+SC.position.set(31,1.1,-4);reg('servoC',SC,'actuators');
+// ESP32 + breadboards + power
+function esp(){const g=mk();box(5.1,.18,2.8,mat.pcb,0,0,0,g);box(2,.35,1.7,mat.silver,-.5,.27,0,g);for(let i=0;i<3;i++)box(.9,.1,.4,mat.gold,1.9,.14,-.9+i*.9,g);box(.8,.4,.9,mat.silver,-2.5,.28,0,g);box(4.6,.3,.25,mat.black,0,.24,1.25,g);box(4.6,.3,.25,mat.black,0,.24,-1.25,g);g.led=box(.18,.1,.18,M(0xff3030,.3,0,{emissive:0xff3030,emissiveIntensity:.2}),1,.14,.8,g);return g}
+function bb(x,z){const g=mk();box(8.2,1,5.5,mat.white,0,.5,0,g);const p=new THREE.Mesh(new THREE.PlaneGeometry(8,5.3),new THREE.MeshStandardMaterial({map:gridT,roughness:.8}));p.rotation.x=-Math.PI/2;p.position.y=1.01;g.add(p);g.position.set(x,0,z);return g}
+reg('bb1',bb(-21,0),'electronics');reg('bb2',bb(14,10),'electronics');
+const E1=esp(),E2=esp();E1.position.set(-21,1.1,0);E2.position.set(14,1.1,10);reg('esp1',E1,'electronics');reg('esp2',E2,'electronics');
+{const g=mk();box(6,1.8,3.4,M(0x1b2a4a,.4,.3),0,.9,0,g);sph(.18,M(0x4ade80,.3,0,{emissive:0x4ade80,emissiveIntensity:2}),2.3,1.85,1,g);g.position.set(26,0,13);reg('power',g,'electronics')}
+// buttons, LEDs, buzzer
+function btn(s){const g=mk();box(3*s,1,3*s,mat.black,0,.5,0,g);cyl(1.3*s,1.3*s,.2,mat.silver,0,1.05,0,g);g.cap=cyl(1.1*s,1.1*s,1,mat.red,0,1.5,0,g,24);g.y0=1.5;return g}
+const B1=btn(1),B2=btn(.6);B1.position.set(-27,0,9);B2.position.set(-21,0,11);reg('btn1',B1,'sensors');reg('btn2',B2,'sensors');
+const LEDC=[0xFFD60A,0xD95CE8,0x22D3EE,0x4ADE80,0xffffff],LEDS={b:[],gl:[]};
+{const g=mk();LEDC.forEach((c,i)=>{cyl(.45,.45,.3,mat.black,-29+i*2,.15,-15,g,12);LEDS.b.push(sph(.35,M(c,.3,0,{emissive:c,emissiveIntensity:.08}),-29+i*2,.6,-15,g));LEDS.gl.push(glow(c,2.6,-29+i*2,.7,-15,g))});reg('leds',g,'sensors')}
+{const g=mk();cyl(.9,.9,1,mat.black,0,.5,0,g);cyl(.2,.2,.05,M(0x555555),0,1.02,0,g,8);g.position.set(20,0,14.5);reg('buzzer',g,'sensors')}
+// IR sensors
+function ir(y){const g=mk();box(1.8,1.2,.12,M(0xb01818,.5),0,0,0,g);const e=cyl(.18,.18,.5,M(0xffdddd,.2,0,{emissive:0xff2020,emissiveIntensity:.2}),-.4,.2,.3,g,12);e.rotation.x=Math.PI/2;const r=cyl(.18,.18,.5,mat.black,.4,.2,.3,g,12);r.rotation.x=Math.PI/2;box(1.2,.2,.2,mat.black,0,-.55,-.1,g);cyl(.12,.12,y-.6,mat.black,0,-.6-(y-.6)/2,-.15,g,8);g.led=e;g.gl=glow(0xff2020,2.4,-.4,.2,.4,g);return g}
+const IR1=ir(2.5),IR2=ir(1.8);IR1.position.set(22,2.5,-1.7);IR2.position.set(28.6,1.8,-1.7);IR1.rotation.y=IR2.rotation.y=Math.PI;reg('ir1',IR1,'sensors');reg('ir2',IR2,'sensors');
+// OLED with live canvas texture
+const oc=document.createElement('canvas');oc.width=128;oc.height=64;const ox=oc.getContext('2d'),otex=new THREE.CanvasTexture(oc);otex.magFilter=otex.minFilter=THREE.NearestFilter;otex.encoding=THREE.sRGBEncoding;
+let okey='';function oled(a,b,c){const k=a+b+c;if(k===okey)return;okey=k;ox.fillStyle='#02060a';ox.fillRect(0,0,128,64);ox.fillStyle='#8fe8ff';ox.textBaseline='top';ox.font='bold 12px monospace';ox.fillText(a,4,4);ox.font='bold 14px monospace';ox.fillText(b,4,24);ox.font='9px monospace';ox.fillText(c,4,50);otex.needsUpdate=true}
+{const g=mk();box(4.4,3.2,.35,M(0x0a2a5a,.5),0,0,0,g);box(3.6,1.9,.05,mat.black,0,.3,.2,g);const s=new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.7),new THREE.MeshBasicMaterial({map:otex}));s.position.set(0,.3,.24);g.add(s);box(3,.3,.3,mat.gold,0,-1.45,0,g);box(.5,2,.3,mat.black,0,-2.2,-.2,g);g.position.set(-24,3.2,-10);g.rotation.x=-.2;reg('oled',g,'sensors')}
+// software panels, wifi arcs
+const SW=[['mqtt','MQTT Broker',-16,18,-4,'#22D3EE'],['nodered','Node-RED',-8,21,-4,'#D95CE8'],['api1','Random API 1',-2,24,-9,'#FFD60A'],['api2','Random API 2',-2,24,1,'#FFD60A'],['vote','Majority Vote',5,21,-4,'#4ADE80'],['tg','Telegram Bot',12,18,-4,'#22D3EE']],PM={};
+SW.forEach(([id,n,x,y,z,col])=>{const g=mk(),t=cv(256,128,(c,w,h)=>{c.fillStyle='rgba(50,36,76,.75)';c.beginPath();c.roundRect?c.roundRect(4,4,w-8,h-8,16):c.rect(4,4,w-8,h-8);c.fill();c.strokeStyle=col;c.lineWidth=5;c.stroke();c.fillStyle=col;c.font='bold 28px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(n,w/2,h/2)});
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(6.4,3.2),new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false}));m.position.set(x,y,z);g.add(m);PM[id]=m;reg(id,g,'software')});
+const arcG=mk();layerG.software.add(arcG);
+const topOf=id=>P[id].home.clone().add(V3(0,P[id].size.y/2,0)),ctr=id=>P[id].home.clone();
+const ARC=[['esp1','mqtt'],['mqtt','nodered'],['nodered','api1'],['nodered','api2'],['api1','vote'],['api2','vote'],['vote','tg'],['tg','esp2']].map(([a,b],i)=>{
+  const p0=a.startsWith('esp')?topOf(a):ctr(a),p1=b.startsWith('esp')?topOf(b):ctr(b),cu=new THREE.QuadraticBezierCurve3(p0,p0.clone().add(p1).multiplyScalar(.5).add(V3(0,6,0)),p1);
+  const m=new THREE.Mesh(new THREE.TubeGeometry(cu,32,.07,6),new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:.12,depthWrite:false}));arcG.add(m);const pu=glow(0x7ff0ff,2.2,0,0,0,arcG);return{curve:cu,mesh:m,pulse:pu}});
+// wires
+const W=[],WL=[['esp1','btn1',0xffd60a,'e'],['esp1','btn2',0xff9f43,'e'],['esp1','oled',0x22d3ee,'e'],['esp1','oled',0x4ade80,'e',1],['esp1','leds',0xd95ce8,'e'],['esp1','leds',0xffffff,'e',1],['esp2','servoA',0xff9f43,'f'],['esp2','servoB',0xff9f43,'f'],['esp2','servoC',0xff9f43,'f'],['esp2','ir1',0xa78bfa,'f'],['esp2','ir2',0xa78bfa,'f'],['esp2','buzzer',0x4ade80,'f'],['power','esp2',0xff3b3b,'p'],['power','servoA',0xff3b3b,'p'],['power','servoB',0xff3b3b,'p'],['power','servoC',0xff3b3b,'p'],['power','servoA',0x111111,'p',1],['power','servoB',0x111111,'p',1],['power','servoC',0x111111,'p',1]];
+// every wire gets its own highlight colour (hues spread around the wheel, neighbours far apart)
+WL.forEach((w,i)=>{w[2]=new THREE.Color().setHSL(((i*7)%WL.length)/WL.length,.95,.58).getHex()});
+WL.forEach(([a,b,col,tag,k=0])=>{const pa=topOf(a).add(V3(.6*k,0,.6*k)),pb=topOf(b).add(V3(.6*k,0,.6*k)),l=pa.distanceTo(pb),mid=pa.clone().add(pb).multiplyScalar(.5).add(V3(0,2+l*.12,k*.8));
+  const cu=new THREE.CatmullRomCurve3([pa,pa.clone().add(V3(0,1.2,0)),mid,pb.clone().add(V3(0,1.2,0)),pb]);
+  const m=new THREE.Mesh(new THREE.TubeGeometry(cu,40,.09,6),M(col,.4,0,{emissive:col,emissiveIntensity:.45}));m.castShadow=true;prep(m,null);layerG.wiring.add(m);
+  let pu=null;if(tag!=='p'){pu=new THREE.Mesh(new THREE.SphereGeometry(.25,10,8),new THREE.MeshBasicMaterial({color:0xffffff}));pu.visible=false;layerG.wiring.add(pu)}W.push({curve:cu,tag,pulse:pu})});
+// sim-only decor: phone, orbs, arrow, cup, rings, confetti
+const DEC=mk();S.add(DEC);
+const PH=mk();box(5,9,.3,mat.black,0,0,0,PH);
+{const s=new THREE.Mesh(new THREE.PlaneGeometry(4.6,8.4),new THREE.MeshBasicMaterial({map:cv(230,420,(x,w,h)=>{x.fillStyle='#17212b';x.fillRect(0,0,w,h);x.fillStyle='#229ED9';x.fillRect(0,0,w,40);x.fillStyle='#fff';x.font='bold 18px sans-serif';x.fillText('Chai Bot',12,26);x.font='17px sans-serif';x.fillText('Approve this toss?',16,120);x.fillStyle='#4ADE80';x.fillRect(30,320,170,56);x.fillStyle='#052';x.font='bold 22px sans-serif';x.fillText('Approve',68,356)})}));s.position.z=.16;PH.add(s)}
+const APPR=new THREE.Mesh(new THREE.PlaneGeometry(3.7,1.12),new THREE.MeshBasicMaterial({color:0xbfffd0,transparent:true,opacity:.7}));APPR.position.set(0,-2.76,.18);PH.add(APPR);
+const THUMB=sph(.45,M(0xe6b48a,.6),0,0,0,PH);PH.position.set(15,12.5,3);PH.rotation.y=-.35;DEC.add(PH);
+const ORB=[0x22d3ee,0xd95ce8,0x4ade80].map(c=>{const o=new THREE.Mesh(new THREE.SphereGeometry(.4,16,12),new THREE.MeshBasicMaterial({color:c}));DEC.add(o);return o}),RORB=new THREE.Mesh(new THREE.SphereGeometry(.7,20,14),new THREE.MeshBasicMaterial({color:0xffffff}));DEC.add(RORB);
+const ARW=new THREE.Mesh(new THREE.ConeGeometry(.6,1.8,16),new THREE.MeshBasicMaterial({color:0xffd60a}));DEC.add(ARW);
+const CUP=mk();{const c=new THREE.Mesh(new THREE.CylinderGeometry(.9,.65,1.4,24,1,true),M(0xf4ecdc,.4,0,{side:THREE.DoubleSide}));c.position.y=.7;CUP.add(c);cyl(.65,.65,.05,M(0xf4ecdc),0,.02,0,CUP);cyl(.85,.85,.05,M(0x8a4b1f,.3),0,1.2,0,CUP);const h=new THREE.Mesh(new THREE.TorusGeometry(.4,.09,8,16),M(0xf4ecdc,.4));h.position.set(.95,.7,0);CUP.add(h)}
+const STEAM=[0,1,2,3,4].map(i=>glow(0xffffff,1.2,0,0,0,CUP));DEC.add(CUP);
+const RINGS=[0,1,2].map(i=>{const r=new THREE.Mesh(new THREE.RingGeometry(.9,1,48),new THREE.MeshBasicMaterial({color:0xffd60a,transparent:true,side:THREE.DoubleSide,depthWrite:false}));r.rotation.x=-Math.PI/2;r.position.set(35,2.7,-7.5);DEC.add(r);return r});
+const NC=240,cpos=new Float32Array(NC*3),ccol=new Float32Array(NC*3),cv0=[];for(let i=0;i<NC;i++){const c=new THREE.Color(LEDC[i%5]);ccol.set([c.r,c.g,c.b],i*3);cv0.push([(Math.random()-.5)*16,7+Math.random()*9,(Math.random()-.5)*16])}
+const CG=new THREE.BufferGeometry();CG.setAttribute('position',new THREE.BufferAttribute(cpos,3));CG.setAttribute('color',new THREE.BufferAttribute(ccol,3));const CONF=new THREE.Points(CG,new THREE.PointsMaterial({size:.55,vertexColors:true,transparent:true,depthWrite:false}));CONF.frustumCulled=false;DEC.add(CONF);
+// leader lines for explode
+const LL=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(new Float32Array(Object.keys(P).length*6),3)),new THREE.LineBasicMaterial({color:0xaaaacc,transparent:true,opacity:.35}));LL.frustumCulled=false;LL.visible=false;S.add(LL);
+
+/* ================= CURVES for marble ================= */
+function mkCurve(side){const c=new THREE.CatmullRomCurve3([PV.T0,PV.T1,PV.S,...(side<0?[PV.L1,PV.L2]:[PV.R1,PV.R2]),PV.J,PV.E],false,'centripetal'),near=p=>{let b=0,d=1e9;for(let i=0;i<=400;i++){const q=c.getPointAt(i/400).distanceTo(p);if(q<d){d=q;b=i/400}}return b};return{c,u1:near(IR1.position),u2:near(IR2.position),us:near(PV.S),ul:near(PV.L1),len:c.getLength()}}
+const CURVES=[mkCurve(-1),mkCurve(1)];
+
+/* ================= INTERACTION ================= */
+const ray=new THREE.Raycaster(),mp=new THREE.Vector2();let sel=null,hov=null,downP=null,saved=null,camTw=null;
+const tip=$('#tip');
+function pick(e){const r=R.domElement.getBoundingClientRect();mp.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mp,C);const h=ray.intersectObjects(ALL.filter(m=>m.userData.pid&&layerG[P[m.userData.pid].layer].visible),false);return h.length?h[0].object.userData.pid:null}
+function setGlow(id,k){if(!id)return;P[id].meshes.forEach(m=>{const e=m.material.emissive;if(e&&m.userData.e0){e.copy(m.userData.e0);if(k)e.addScalar(.22)}})}
+function focus(id){ALL.forEach(m=>{const mt=m.material,d=id&&m.userData.pid!==id;mt.transparent=d?true:m.userData.t0;mt.opacity=d?m.userData.o0*.22:m.userData.o0;mt.needsUpdate=true})}
+function camTo(p,t,d=1.1){camTw={p0:C.position.clone(),t0:OC.target.clone(),p1:p,t1:t,s:0,d:RM?.01:d}}
+function select(id){
+  if(id===sel)return;
+  if(sel){const o=P[sel];o.pop=false;o.w.rotation.y=Math.atan2(Math.sin(o.w.rotation.y),Math.cos(o.w.rotation.y));setGlow(sel,0)}
+  if(!id){sel=null;focus(null);$('#info').classList.remove('on');if(saved){camTo(saved.p,saved.t);saved=null}return}
+  const p=P[id];sel=id;if(!saved)saved={p:C.position.clone(),t:OC.target.clone()};
+  const fl=V3(C.position.x-p.w.position.x,0,C.position.z-p.w.position.z).normalize();
+  p.popPos.copy(p.w.position).add(V3(0,7,0)).addScaledVector(fl,6);p.pop=true;setGlow(id,1);focus(id);
+  const d=cl(Math.max(p.size.x,p.size.y,p.size.z)*1.8+8,12,60),dir=C.position.clone().sub(OC.target).normalize();camTo(p.popPos.clone().addScaledVector(dir,d),p.popPos.clone());
+  const f=(l,v)=>v?'<div class=f><b>'+l+'</b>'+v+'</div>':'',ln=LAYERS.find(l=>l[0]===p.layer)[1];
+  $('#info').innerHTML='<button id=x>&larr; Back</button><h2>'+p.name+'</h2><span class=tag>'+ln+'</span>'+f('Function',p.fn)+f('Used in steps',p.steps)+f('Connected to',p.conn)+f('Key specs',p.specs)+f('Approx. price',p.price)+f('Free tools / code',p.tools);
+  $('#x').onclick=()=>select(null);$('#info').classList.add('on')}
+R.domElement.addEventListener('pointerdown',e=>{downP=[e.clientX,e.clientY];stopAuto()});
+R.domElement.addEventListener('pointerup',e=>{if(downP&&Math.hypot(e.clientX-downP[0],e.clientY-downP[1])<6&&!sim.playing)select(pick(e));downP=null});
+R.domElement.addEventListener('pointermove',e=>{if(e.buttons||sim.playing){tip.style.display='none';return}const id=pick(e);if(id!==hov){if(hov&&hov!==sel)setGlow(hov,0);hov=id;if(id&&id!==sel)setGlow(id,1)}
+  R.domElement.style.cursor=id?'pointer':'grab';if(id){tip.textContent=P[id].name;tip.style.display='block';tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+14+'px'}else tip.style.display='none'});
+addEventListener('keydown',e=>{if(e.key==='Escape')select(null);if(e.key==='p'||e.key==='P')present()});
+
+/* ================= AUDIO ================= */
+let AC;function audioInit(){AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}
+function bell(){if(!AC)return;const t0=AC.currentTime,g=AC.createGain();g.connect(AC.destination);g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.3,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+2.6);[1,2.76,5.4,8.9].forEach((m,i)=>{const o=AC.createOscillator(),og=AC.createGain();o.frequency.value=660*m;og.gain.value=1/(i+1.5);o.connect(og);og.connect(g);o.start(t0);o.stop(t0+2.7)})}
+
+/* ================= SIMULATION TIMELINE (pure function of time t) ================= */
+const sim={t:0,playing:false,active:false,speed:1,side:-1,mode:0,cin:true};let PRES=false,lastCap='';
+function newSide(){sim.side=sim.mode?sim.mode:(Math.random()<.5?-1:1)}
+function camM(t){let i=0;while(i<KF.length-2&&t>=KF[i+1][0])i++;const a=KF[i],b=KF[i+1],u=ez(lin(t,a[0],b[0]));C.position.set(...a[1]).lerp(V3(...b[1]),u);OC.target.set(...a[2]).lerp(V3(...b[2]),u)}
+const tmp=V3(0,0,0);
+const DCAM=[[12,18,12],[6,17,-38]];
+function camAt(t){if(t>=TD){camM(t-TD);return}
+  const dp=V3(...DCAM[0]).add(V3(Math.sin(t*.35)*1.5,Math.sin(t*.27),0)),dt_=V3(...DCAM[1]),a=ez(lin(t,0,2.4));
+  const pos=V3(34,24,22).lerp(dp,a),tar=V3(6,6,-14).lerp(dt_,a),b=ez(lin(t,TD-2.6,TD));
+  if(b>0){camM(0);pos.lerp(C.position.clone(),b);tar.lerp(OC.target.clone(),b)}
+  C.position.copy(pos);OC.target.copy(tar)}
+function applyM(t){
+  const A=sim.active,side=sim.side,cu=CURVES[side<0?0:1];
+  B1.cap.position.y=B1.y0-.55*(pr(t,3,3.4)-pr(t,3.6,4.1));
+  const lt=[3.4,6,10,16.5,31];LEDS.b.forEach((m,i)=>{const on=t>=lt[i]?1:0;m.material.emissiveIntensity=.08+on*2.4;LEDS.gl[i].material.opacity=on*.8});
+  E1.led.material.emissiveIntensity=t<3.6?.2:t<6?(Math.sin(t*34)>0?3:.2):1.2;
+  E2.led.material.emissiveIntensity=t<17.8?.2:t<20?(Math.sin(t*34)>0?3:.2):1.2;
+  W.forEach(w=>{if(!w.pulse)return;const u=w.tag==='e'?lin(t,4,6):lin(t,18.2,20);w.pulse.visible=u>0&&u<1;if(w.pulse.visible)w.pulse.position.copy(w.curve.getPoint(u))});
+  const AT=[[6,7.4],[7.4,8.8],[8.8,10.2],[8.8,10.2],[10.2,11.4],[10.2,11.4],[12.6,14],[16.6,18.4]];
+  ARC.forEach((a,i)=>{const u=lin(t,AT[i][0],AT[i][1]);a.mesh.material.opacity=.12+(u>0?.65:0);a.pulse.visible=u>0&&u<1;a.pulse.material.opacity=a.pulse.visible?1:0;if(a.pulse.visible)a.pulse.position.copy(a.curve.getPoint(u))});
+  const PT_={mqtt:6.8,nodered:8.3,api1:9.8,api2:9.8,vote:11.5,tg:14};for(const k in PT_)PM[k].material.opacity=.5+.5*pr(t,PT_[k],PT_[k]+.5);
+  // majority vote orbs
+  const op=pr(t,10.4,12.2),vp=ctr('vote'),srcs=[ctr('api1'),ctr('api2'),topOf('esp1')];
+  ORB.forEach((o,i)=>{o.visible=t>10.4&&t<12.3;o.position.lerpVectors(srcs[i],vp,op);o.position.y+=Math.sin(op*Math.PI)*3});
+  RORB.visible=t>=12.2&&t<15.5;RORB.material.color.set(side<0?0x22d3ee:0xffd60a);RORB.position.copy(vp);RORB.scale.setScalar(.6+.4*pr(t,12.2,12.8));
+  ARW.visible=t>=12.6&&t<15.5;ARW.rotation.x=side*Math.PI/2;ARW.position.copy(vp).add(V3(0,2.4,side*1.8));ARW.scale.setScalar(pr(t,12.6,13.3));
+  // telegram phone
+  PH.visible=t>=14&&t<19;PH.scale.setScalar(.01+.99*pr(t,14,15));THUMB.position.set(0,-2.76,.4).add(V3(3,-3.2,2.5).multiplyScalar(1-pr(t,15,15.9)));THUMB.position.z-=.25*(pr(t,16,16.15)-pr(t,16.15,16.3));APPR.visible=t>=16.2;
+  // servos / gate / marble
+  const gs=-side*.5*pr(t,19.2,20.2);GATE.rotation.y=gs;SB.horn.rotation.y=gs*2;
+  SA.horn.rotation.y=-.7*pr(t,20.4,21.4);CR.rotation.z=-.4*pr(t,20.5,21.4);
+  const lv=-.9*(pr(t,28.7,29.5)-pr(t,30.6,31.6));LV.rotation.y=lv;SC.horn.rotation.y=lv;
+  const p=lin(t,21.6,28.6),u=ez(p);
+  {const uu=p<=0?0:u,pt=cu.c.getPointAt(uu),tg=cu.c.getTangentAt(uu).normalize(),lat=new THREE.Vector3().crossVectors(tg,V3(0,1,0)).normalize(),up=new THREE.Vector3().crossVectors(lat,tg),
+   w0=cu.us-.03,w=cl((uu-w0)/(cu.ul-w0)),air=p>0&&w>0&&w<1,
+   qb=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(tg,up,lat)),
+   qr=new THREE.Quaternion().setFromAxisAngle(V3(0,0,1),-(uu*cu.len)/COIN_R),
+   qf=new THREE.Quaternion().setFromAxisAngle(tg,air?4*Math.PI*ez(w):0);
+   P.marble.w.position.copy(pt).add(V3(0,COIN_DY+(air?1.8*Math.sin(Math.PI*w):0),0));P.marble.inner.quaternion.copy(qf.multiply(qb).multiply(qr))}
+  const f1=p>0&&u>=cu.u1&&u<cu.u1+.05,f2=p>0&&u>=cu.u2&&u<cu.u2+.05;
+  IR1.led.material.emissiveIntensity=f1?4:.2;IR1.gl.material.opacity=f1?1:0;IR2.led.material.emissiveIntensity=f2?4:.2;IR2.gl.material.opacity=f2?1:0;
+  // bell
+  const s=t-29.5;BP.rotation.z=s>0?.5*Math.exp(-s*.9)*Math.sin(s*9):0;
+  RINGS.forEach((r,i)=>{const s2=s-i*.25;r.visible=s2>0&&s2<1.6;if(r.visible){r.scale.setScalar(1+s2*5);r.material.opacity=(1-s2/1.6)*.7}});
+  // OLED + step counter
+  const n=STEPS.filter(x=>x<=t).length;
+  if(t>=31)oled('WINNER!',side<0?'PERSON A PAYS':'PERSON B PAYS','21 steps instead of 1');else if(t<3)oled('CHAI TOSS','READY','press the button');else oled('CHAI TOSS','STEP '+String(n).padStart(2,'0')+'/21','working...');
+  // confetti
+  const cs=t-31;CONF.visible=cs>0&&cs<12;if(CONF.visible){for(let i=0;i<NC;i++){const v=cv0[i],k=(1-Math.exp(-1.5*cs))/1.5;cpos[i*3]=4+v[0]*k;cpos[i*3+1]=Math.max(.1,12+v[1]*k-2.2*cs);cpos[i*3+2]=v[2]*k}CG.attributes.position.needsUpdate=true;CONF.material.opacity=1-lin(cs,9,12)}
+  // chai cup
+  CUP.visible=t>=34;const cp=pr(t,34,38);CUP.position.set(40+(30-40)*cp,0,side*16*cp);STEAM.forEach((sp,i)=>{const fr=(t*.5+i/5)%1;sp.position.set(Math.sin(t*2+i)*.25,1.8+fr*3,0);sp.material.opacity=CUP.visible?(1-fr)*.45:0});
+  // DOM
+  let c='';for(const [ct,tx] of CAPS)if(t>=ct)c=tx;if(!A)c='';if(c!==lastCap){lastCap=c;$('#cap').textContent=c;$('#cap').style.opacity=c?1:0}
+  $('#title').style.opacity=A&&t<3?1:0;$('#tag').style.opacity=A&&t>=35.5?1:0;$('#stp').textContent=A?'Step '+n+' / 21':'';
+}
+/* ================= CHAI TAPRI DIORAMA + THE TWO FRIENDS (Person A and Person B) ================= */
+// ----- green grass ground, dusk sky and trees -----
+S.background=cv(4,256,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#14213d');g.addColorStop(.55,'#46628f');g.addColorStop(1,'#8aa0be');x.fillStyle=g;x.fillRect(0,0,w,h)});
+const grassT=cv(256,256,(x,w,h)=>{x.fillStyle='#3d8b37';x.fillRect(0,0,w,h);for(let i=0;i<2800;i++){const k=Math.random()*40|0;x.strokeStyle='rgb('+(40+k)+','+(105+Math.random()*75|0)+','+(40+k/2|0)+')';x.lineWidth=1+Math.random()*1.5;const px=Math.random()*w,py=Math.random()*h;x.beginPath();x.moveTo(px,py);x.lineTo(px+(Math.random()-.5)*4,py-3-Math.random()*7);x.stroke()}});
+grassT.wrapS=grassT.wrapT=THREE.RepeatWrapping;grassT.repeat.set(28,28);
+floor.material.map=grassT;floor.material.color.set(0xffffff);floor.material.roughness=.95;floor.material.metalness=0;floor.material.needsUpdate=true;
+const grassP=grassT.clone();grassP.wrapS=grassP.wrapT=THREE.RepeatWrapping;grassP.repeat.set(10,4);grassP.needsUpdate=true;
+const TP=mk();S.add(TP);let STM=[],BULBS=[];
+function tree(x,z,type,sc){const g=mk(),bark=M(0x6b4a2b,.9),l1=M(0x2f7d32,.9,0,{flatShading:true}),l2=M(0x3f9a3a,.9,0,{flatShading:true}),l3=M(0x2a6b2e,.9,0,{flatShading:true});g.position.set(x,-2,z);g.scale.setScalar(sc);
+ if(type==='pine'){cyl(.7,1,7,bark,0,3.5,0,g,8);[[5.8,7,9,l1],[4.7,6,13.2,l2],[3.4,5,17,l3]].forEach(([r,h,y,m])=>{const c=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),m);c.position.y=y;c.castShadow=true;g.add(c)})}
+ else{cyl(.9,1.3,11,bark,0,5.5,0,g,8);[[0,15,0,5.2,l1],[3.2,13.5,1.5,3.8,l2],[-3,14,-1,4,l3],[.5,18,-.5,3.6,l2]].forEach(([dx,y,dz,r,m])=>{const b=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),m);b.position.set(dx,y,dz);b.castShadow=true;g.add(b)})}
+ TP.add(g)}
+[[-40,-70,'r',1.3],[-8,-78,'p',1.4],[25,-72,'r',1.5],[52,-66,'p',1.2],[-62,-58,'r',1.4],[72,-46,'r',1.3],[-58,-28,'p',1.2],[-66,-6,'r',1.3],[-60,16,'p',1.1],[-72,34,'r',1.4],[-27,-52,'r',1.05],[41,-50,'p',1.05],[10,-88,'r',1.6],[-88,-40,'p',1.5]].forEach(([x,z,t,sc])=>tree(x,z,t==='p'?'pine':'round',sc));
+{const wood=M(0x8a5a2b,.7),red=M(0xb23a2e,.7),tin=M(0x2f6f8f,.5,.3),cream=M(0xe9d8b4,.9),dk=M(0x2a2a2e,.5,.4),stl=M(0xcfd5dc,.25,.9),glassM=M(0xdfeaf2,.1,0,{transparent:true,opacity:.55});
+ box(84,2,34,M(0xffffff,.95,0,{map:grassP}),4,-1,-39,TP);
+ [[-12,-41],[24,-41],[-12,-51],[24,-51]].forEach(([x,z])=>cyl(.6,.6,26,wood,x,13,z,TP,10));
+ box(37,24,.6,cream,6,12,-51.3,TP);box(36,7,6.5,red,6,3.5,-46,TP);box(37.5,.8,7.6,wood,6,7.4,-46,TP);
+ const roof=box(41,.8,13.4,tin,6,26.6,-47,TP);roof.rotation.x=.13;box(41,.4,.5,M(0xffb400,.6),6,25.7,-40.4,TP);
+ const sbT=cv(512,160,(x,w,h)=>{x.fillStyle='#d92e2e';x.fillRect(0,0,w,h);x.strokeStyle='#ffd60a';x.lineWidth=8;x.strokeRect(8,8,w-16,h-16);x.fillStyle='#fff';x.textAlign='center';x.font='bold 64px sans-serif';x.fillText('CHAI \u00B7 \u091A\u093E\u092F',w/2,78);x.fillStyle='#ffd60a';x.font='bold 30px sans-serif';x.fillText('Garam Chai \u20B910',w/2,126)});
+ const sb=new THREE.Mesh(new THREE.PlaneGeometry(22,6.9),new THREE.MeshBasicMaterial({map:sbT}));sb.position.set(6,21.4,-40.1);TP.add(sb);box(22.8,7.6,.3,wood,6,21.4,-40.35,TP);
+ box(6,1.8,4.2,dk,-5,8.7,-46,TP);cyl(.9,.9,.4,M(0xff6a00,.4,0,{emissive:0xff6a00,emissiveIntensity:1.2}),-5,9.8,-46,TP,12);
+ const kt=mk();kt.position.set(-5,11.4,-46);cyl(2.1,2.5,3.4,stl,0,0,0,kt,20);cyl(1.4,1.9,.5,stl,0,1.9,0,kt,20);sph(.4,stl,0,2.4,0,kt);const spt=cyl(.35,.5,2.6,stl,2.9,.9,0,kt,10);spt.rotation.z=-.9;TP.add(kt);
+ for(let i=0;i<5;i++){const gx=5+i*2.3;cyl(.75,.6,1.8,glassM,gx,8.7,-45,TP,14);cyl(.62,.5,.9,M(0x8a4b1f,.5),gx,8.25,-45,TP,14)}
+ [[19,-45],[22.5,-45]].forEach(([x,z])=>{cyl(1.5,1.5,2.8,glassM,x,9.2,z,TP,16);cyl(1.6,1.6,.6,red,x,10.9,z,TP,16)});
+ box(11,1.4,3.6,wood,32,2.2,-36,TP);[-4.5,4.5].forEach(dx=>box(1,2.2,3,wood,32+dx,1.1,-36,TP));
+ [[-6,-40.8],[19,-40.8]].forEach(([x,z])=>{cyl(.05,.05,3,dk,x,24,z,TP,6);sph(.7,M(0xffe9a8,.3,0,{emissive:0xffd27a,emissiveIntensity:2}),x,22.2,z,TP);BULBS.push(glow(0xffd27a,6,x,22.2,z,TP))});
+ const wl=new THREE.PointLight(0xffb45a,.9,80);wl.position.set(6,20,-36);S.add(wl);
+ STM=[0,1,2,3].map(()=>glow(0xffffff,3,0,0,0,TP))}
+function person(o){const g=mk(),skin=M(o.skin,.6),kur=M(0xf2d21e,.8),kur2=M(0xe0b800,.8),pant=M(o.pant,.9),shoe=M(o.shoe,.6),hair=M(o.hair,.9),dk=M(0x1a1410,.5);
+ [-1,1].forEach(s=>{box(2.5,.6,4.4,shoe,s*1.9,.3,.7,g);cyl(1.75,1.3,9.4,pant,s*1.9,5.3,0,g,14)});
+ const bd=cyl(3.2,3.7,9.4,kur,0,12.7,0,g,24);bd.scale.set(1.18,1,.8);const hm=cyl(3.74,3.8,1.3,kur2,0,8.3,0,g,24);hm.scale.set(1.18,1,.8);
+ [0,1,2].forEach(i=>sph(.22,dk,0,16.2-i*1.5,2.68,g));cyl(1.5,1.7,.8,kur2,0,17.6,0,g,16);cyl(.85,.9,1.3,skin,0,18.2,0,g,12);
+ const head=mk();head.position.set(0,20.4,0);g.add(head);const hd=sph(2.2,skin,0,0,0,head);hd.scale.set(1,1.14,1);
+ [-1,1].forEach(s=>{sph(.2,dk,s*.8,.35,1.97,head);box(.95,.16,.2,hair,s*.8,.9,2.0,head);sph(.45,skin,s*2.15,0,0,head)});
+ sph(.34,skin,0,-.15,2.25,head);const mouth=box(.95,.16,.2,M(0x6a2a2a,.6),0,-.95,2.05,head);
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(2.32,24,16,0,Math.PI*2,0,Math.PI*.56),hair);cap.position.y=.2;cap.scale.set(1,1.12,1.02);cap.castShadow=true;head.add(cap);
+ if(o.beard){const bm=M(o.beard,.95),bd2=new THREE.Mesh(new THREE.SphereGeometry(2.28,20,12,0,Math.PI*2,Math.PI*.66,Math.PI*.34),bm);bd2.scale.set(1,1.14,1.02);head.add(bd2);box(1.9,.22,.35,bm,0,-.55,2.1,head)}
+ if(o.shades){const gl=M(0x050505,.15,.8);[-1,1].forEach(s=>{box(1.3,.75,.18,gl,s*.85,.35,2.12,head);box(.1,.1,2.1,gl,s*2.1,.4,1.1,head)});box(.5,.1,.18,gl,0,.45,2.14,head)}
+ const arms={},elb={};
+ [-1,1].forEach(s=>{const sh=mk();sh.position.set(s*3.95,16.5,0);g.add(sh);cyl(.88,.78,4.3,kur,0,-2.15,0,sh,14);const el=mk();el.position.set(0,-4.3,0);sh.add(el);cyl(.74,.64,4.2,kur,0,-2.1,0,el,14);cyl(.78,.78,.55,kur2,0,-3.95,0,el,14);sph(.72,skin,0,-4.6,0,el);arms[s]=sh;elb[s]=el});
+ g.userData={head,mouth,arms,elb};return g}
+const PA=person({skin:0xd2a07a,pant:0xc9ccd0,shoe:0x4a3426,hair:0x8c8c8c,beard:0x6f6f6f}),PB=person({skin:0xd7a37f,pant:0x7b7e82,shoe:0xefe9d2,hair:0xf1f1f1,beard:0xe4e4e4,shades:true});
+PA.position.set(-3,0,-36);PA.rotation.y=.55;PB.position.set(15,0,-36);PB.rotation.y=-.55;TP.add(PA,PB);
+function tagSprite(txt,col,p){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:cv(256,64,(x,w,h)=>{x.fillStyle='rgba(22,18,26,.85)';x.fillRect(0,0,w,h);x.strokeStyle=col;x.lineWidth=5;x.strokeRect(3,3,w-6,h-6);x.fillStyle=col;x.font='bold 36px sans-serif';x.textAlign='center';x.fillText(txt,w/2,45)}),transparent:true}));s.scale.set(7,1.75,1);s.position.set(p.position.x,26,p.position.z);TP.add(s)}
+tagSprite('PERSON A','#22D3EE',PA);tagSprite('PERSON B','#FFD60A',PB);
+// dialogue: [speaker, start, end, text] in seconds of the whole timeline. Edit the text here.
+const DLG=[['A',1.8,4.4,"Chai was amazing! Now... who pays?"],['B',4.6,7.2,"You pay. I paid last time!"],['A',7.4,9.8,"No way! It's your turn today!"],['B',10,12.4,"Fine. Let's toss a coin."],['A',12.6,14.8,"A normal toss? So boring..."],['B',15,17.4,"Let the machine decide!"]];
+const OUT=[[TD+41.8,TD+45,"Okay okay, I will pay!"],[TD+45.2,TD+48.8,"21 steps well spent! Chai is on you!"]];
+const tpWrap=(x,t,w)=>{const ws=t.split(' ');let l='',o=[];ws.forEach(k=>{const n=l?l+' '+k:k;if(x.measureText(n).width>w&&l){o.push(l);l=k}else l=n});o.push(l);return o};
+function mkB(who,t0,t1,text,role){const col=who==='A'?'#0e9bb5':'#b88a00',s=new THREE.Sprite(new THREE.SpriteMaterial({map:cv(512,256,(x,w,h)=>{x.fillStyle='#fff';x.beginPath();x.roundRect?x.roundRect(8,8,w-16,h-70,28):x.rect(8,8,w-16,h-70);x.fill();x.beginPath();x.moveTo(w/2-26,h-62);x.lineTo(w/2,h-12);x.lineTo(w/2+26,h-62);x.fill();x.fillStyle=col;x.font='bold 34px sans-serif';x.textAlign='center';x.fillText('PERSON '+who,w/2,52);x.fillStyle='#16121a';x.font='bold 36px sans-serif';tpWrap(x,text,w-70).forEach((l,i)=>x.fillText(l,w/2,100+i*44))}),transparent:true,depthTest:false}));s.scale.set(.001,.001,1);s.renderOrder=10;TP.add(s);return{s,who,t0,t1,role,text}}
+const BUB=DLG.map(d=>mkB(d[0],d[1],d[2],d[3],''));
+['A','B'].forEach(w=>{BUB.push(mkB(w,OUT[0][0],OUT[0][1],OUT[0][2],'L'));BUB.push(mkB(w,OUT[1][0],OUT[1][1],OUT[1][2],'W'))});
+function pose(p,spk,t,mode){const u=p.userData,ph=p===PA?0:1.3;
+ u.mouth.scale.y=spk?.7+2.6*Math.abs(Math.sin(t*13+ph)):.7;
+ u.head.rotation.set(spk?.07*Math.sin(t*5+ph):0,(p===PA?-.2:.2)+(mode==='lose'?.4*Math.sin(t*7):0),0);
+ [-1,1].forEach(s=>{u.arms[s].rotation.set(0,0,s*.14);u.elb[s].rotation.set(-.18,0,0)});p.position.y=0;
+ if(spk&&!mode){u.arms[1].rotation.set(-.8-.3*Math.sin(t*4+ph),0,.14);u.elb[1].rotation.set(-.9-.3*Math.sin(t*6+ph),0,0)}
+ if(mode==='point'){u.arms[1].rotation.set(-1.45,-.15,.1);u.elb[1].rotation.set(-.05,0,0)}
+ if(mode==='win'){[-1,1].forEach(s=>{u.arms[s].rotation.set(0,0,s*(2.5+.25*Math.sin(t*9)));u.elb[s].rotation.set(0,0,0)});p.position.y=Math.abs(Math.sin(t*6))*1.2}
+ if(mode==='lose'){[-1,1].forEach(s=>{u.arms[s].rotation.set(0,0,s*.8);u.elb[s].rotation.set(-1.2,0,0)})}}
+function tapriTick(now){const s=now/1000;STM.forEach((m,i)=>{const fr=(s*.35+i/4)%1;m.position.set(-2.4+Math.sin(s*2+i)*.5,13.8+fr*6,-46);m.material.opacity=.4*(1-fr)});BULBS.forEach((b,i)=>b.material.opacity=.85+.1*Math.sin(s*9+i*2))}
+let swHid=false,dlgCap='';
+function setCap(txt){const c=$('#cap');if(txt){c.textContent=txt;c.style.opacity=1;lastCap='\u0001';dlgCap=txt}else if(dlgCap){dlgCap='';lastCap='\u0002'}}
+// whole timeline: 0..TD = the two friends talk, then the machine runs (machine time = t - TD), then they react
+function applyAt(t){
+  applyM(Math.max(0,t-TD));
+  const A=sim.active,side=sim.side,loserWho=side<0?'A':'B',winnerWho=side<0?'B':'A';
+  $('#title').style.opacity=A&&t<3?1:0;if(t<TD)$('#stp').textContent='';
+  const hide=A&&t<TD-1.2;if(hide){layerG.software.visible=false;swHid=true}else if(swHid){layerG.software.visible=document.querySelector('#lay input[data-l=software]').checked;swHid=false}
+  let cap='';
+  BUB.forEach(b=>{let on=A&&t>=b.t0&&t<b.t1;if(on&&b.role)on=b.who===(b.role==='L'?loserWho:winnerWho);
+    const u=on?ez(lin(t,b.t0,b.t0+.3))*(1-ez(lin(t,b.t1-.25,b.t1))):0,p=b.who==='A'?PA:PB;b.s.scale.set(Math.max(.001,15*u),Math.max(.001,7.5*u),1);b.s.position.set(p.position.x,31.5+Math.sin(t*3)*.3,p.position.z);
+    if(on)cap='Person '+b.who+': "'+b.text+'"'});
+  let mA='',mB='',sA=false,sB=false;
+  if(A){BUB.forEach(b=>{if(t>=b.t0&&t<b.t1&&(!b.role||b.who===(b.role==='L'?loserWho:winnerWho))){if(b.who==='A')sA=true;else sB=true}});
+    if(t>=OUT[0][0]){if(side<0){mA='lose';mB='win'}else{mA='win';mB='lose'}}else if(t>=DLG[5][1]&&t<TD)mB='point'}
+  pose(PA,sA,t,mA);pose(PB,sB,t,mB);setCap(cap);
+}
+$('#scr').max=T;
+function resetSim(){sim.playing=false;sim.active=false;sim.t=0;applyAt(0);$('#scr').value=0;updPlay();OC.enabled=true}
+function updPlay(){$('#play').innerHTML=sim.playing?'&#10074;&#10074; Pause':'&#9654; '+(sim.active?'Resume':'Play Simulation')}
+function startSim(){audioInit();select(null);ex.v=0;ex.auto=0;$('#ex').value=0;stopAuto();if(!sim.active||sim.t>=T-.1){sim.t=0;newSide()}sim.active=true;sim.playing=true;updPlay()}
+$('#play').onclick=()=>{if(sim.playing){sim.playing=false;updPlay()}else startSim()};
+$('#rst').onclick=()=>{sim.t=0;newSide();startSim()};
+$('#spd').onchange=e=>sim.speed=+e.target.value;
+$('#res').onchange=e=>{sim.mode=+e.target.value;newSide()};
+$('#cam').onchange=e=>sim.cin=e.target.value==='cin';
+let scrubbing=false;$('#scr').oninput=e=>{select(null);sim.active=true;sim.playing=false;sim.t=+e.target.value;updPlay();scrubbing=true};
+
+/* ================= EXPLODE + LAYERS + UI ================= */
+const ex={v:0,auto:0};
+$('#ex').oninput=e=>{ex.v=e.target.value/100;ex.auto=0};
+$('#asm').onclick=()=>{ex.auto=ex.v<.5?1:-1};
+$('#lay').innerHTML=LAYERS.map(([k,n])=>'<label><input type=checkbox checked data-l="'+k+'"><i></i>'+n+'</label>').join('');
+$('#lay').onchange=e=>{layerG[e.target.dataset.l].visible=e.target.checked;if(sel&&!layerG[P[sel].layer].visible)select(null)};
+$('#list').innerHTML=LAYERS.map(([k,n])=>'<b style="font-size:11px;color:#FFD60A">'+n+'</b>'+DATA.filter(d=>d.layer===k).map(d=>'<button data-p="'+d.id+'">'+d.name+'</button>').join('')).join('');
+$('#list').onclick=e=>{const id=e.target.dataset.p;if(id&&!sim.playing)select(id)};
+$('#lst').onclick=()=>$('#list').classList.toggle('on');
+const VIEWS={front:[[4,14,80],[4,4,0]],top:[[4,105,.1],[4,0,0]],side:[[98,14,0],[4,4,0]],iso:[[58,40,62],[4,4,0]]};
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{stopAuto();select(null);const v=VIEWS[b.dataset.v];camTo(V3(...v[0]),V3(...v[1]),1.4)});
+function stopAuto(){OC.autoRotate=false;$('#auto').classList.remove('on')}
+$('#auto').onclick=()=>{if(RM)return;OC.autoRotate=!OC.autoRotate;$('#auto').classList.toggle('on',OC.autoRotate)};
+$('#reset').onclick=()=>{select(null);ex.v=0;ex.auto=0;$('#ex').value=0;stopAuto();document.querySelectorAll('#lay input').forEach(i=>{i.checked=true;layerG[i.dataset.l].visible=true});resetSim();PRES=false;document.body.classList.remove('pres');camTo(V3(...VIEWS.iso[0]),V3(...VIEWS.iso[1]),1.4)};
+function present(){PRES=!PRES;document.body.classList.toggle('pres',PRES);$('#pres').classList.toggle('on',PRES);if(PRES){sim.cin=true;$('#cam').value='cin';sim.t=0;newSide();startSim()}else resetSim()}
+$('#pres').onclick=present;
+if(innerWidth<700)document.querySelector('#left details').open=false;
+setTimeout(()=>$('#hint').style.opacity=0,6000);
+
+/* ================= MAIN LOOP ================= */
+let last=performance.now();const ZT=V3(0,0,0);
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(sim.playing){const pt=sim.t;sim.t+=dt*sim.speed;if(pt<29.5+TD&&sim.t>=29.5+TD)bell();if(sim.t>=T){if(PRES){sim.t=0;newSide()}else{sim.t=T;sim.playing=false;updPlay()}}}
+  if(sim.active){applyAt(sim.t);$('#scr').value=sim.t;if(sim.cin&&(sim.playing||scrubbing)){camAt(sim.t);camTw=null;const s=sim.t-29.5-TD;if(sim.playing&&!RM&&s>0&&s<.45){const a=.2*(1-s/.45);C.position.x+=(Math.random()-.5)*a;C.position.y+=(Math.random()-.5)*a}}scrubbing=false;OC.enabled=!(sim.cin&&sim.playing)}
+  if(camTw){camTw.s+=dt/camTw.d;const k=ez(camTw.s);C.position.lerpVectors(camTw.p0,camTw.p1,k);OC.target.lerpVectors(camTw.t0,camTw.t1,k);if(camTw.s>=1)camTw=null}
+  if(ex.auto){ex.v=cl(ex.v+ex.auto*dt/4.5);$('#ex').value=ex.v*100;if(ex.v<=0||ex.v>=1)ex.auto=0}
+  $('#exv').textContent=Math.round(ex.v*100);$('#asm').textContent=ex.v>.5?'Assemble':'Disassemble';
+  const k=1-Math.exp(-dt*7),pos=LL.geometry.attributes.position.array;let n=0;
+  for(const id in P){const p=P[id];if(sim.active&&id==='marble'){n++;continue}
+    const f=ez(cl(ex.v*1.6-LI[p.layer]*.12));if(p.pop)ZT.copy(p.popPos);else ZT.copy(p.home).addScaledVector(p.off,f);
+    p.w.position.lerp(ZT,k);if(p.pop)p.w.rotation.y+=dt*.7;else p.w.rotation.y*=Math.exp(-dt*6);
+    pos.set([p.home.x,p.home.y,p.home.z,p.w.position.x,p.w.position.y,p.w.position.z],n*6);n++}
+  LL.geometry.attributes.position.needsUpdate=true;LL.visible=ex.v>.02&&!sel;
+  layerG.wiring.position.y=LIFT.wiring*ez(cl(ex.v*1.6-LI.wiring*.12));
+  tapriTick(now);OC.update();R.render(S,C)}
+resetSim();newSide();applyAt(0);
+requestAnimationFrame(t=>{last=t;loop(t);setTimeout(()=>{const l=$('#load');l.style.opacity=0;setTimeout(()=>l.remove(),500)},300)});
+<\/script></body></html>
+</script>
+</section>
+
+<section id="comps"><h2>Components</h2><div class="cards" id="cg"></div><div class="card" id="tot"></div>
+ <h3 style="margin-top:30px">Software stack</h3><div id="sb" class="row"></div></section>
+
+<section id="hw"><h2>Hardware structure and wiring</h2>
+ <div class="card"><svg id="blk" viewBox="0 0 960 420" style="width:100%" aria-label="Hardware block diagram"></svg></div>
+ <div class="two" style="margin-top:24px"><div id="p1"></div><div id="p2"></div></div>
+ <p class="card" style="margin-top:20px">Servos run from an external 5V 2A supply. Its ground is shared with the ESP32 (common ground) so signals are clean and the ESP32 never resets.</p></section>
+
+<section id="sw"><h2>Software architecture</h2>
+ <div id="lay"></div>
+ <h3>Simplified Node-RED flow</h3>
+ <div class="nr"><span>MQTT in</span><i>▶</i><span>HTTP request API 1</span><i>▶</i><span>HTTP request API 2</span><i>▶</i><span>function: majority vote</span><i>▶</i><span>Telegram sender</span><i>▶</i><span>Telegram receiver</span><i>▶</i><span>MQTT out</span></div>
+ <details class="card"><summary>ESP32 #1 pseudo-code (simplified)</summary><pre>setup: wifi.connect(); mqtt.connect(); oled.init()
+loop:
+  if button1 pressed (debounced 50 ms):
+     r3 = esp_random()              // hardware RNG
+     mqtt.publish("chai/request", r3)
+  on mqtt "chai/result": oled.show(winner, "21 steps instead of 1")
+  if button2 pressed: reset()</pre></details>
+ <details class="card"><summary>ESP32 #2 pseudo-code (simplified)</summary><pre>on mqtt "chai/approved"(side):
+  servoA.write(90)                    // release marble
+  servoB.write(side == LEFT ? 30 : 150) // gate
+  wait for IR1 (max 10 s)             // right path?
+  wait for IR2 (max 10 s)             // at lever?
+  servoC.swing(); bell.ring()
+  mqtt.publish("chai/done")
+timeout: pick side locally and continue</pre></details>
+</section>
+
+<section id="judge"><h2>Why it is over-engineered</h2><div class="cards" id="ck"></div>
+ <div class="meter" aria-label="Complexity meter"><i id="mt">21x</i></div></section>
+
+<section id="safe"><h2>Fail-safe and reliability</h2>
+ <div class="tl"><div>Any step starts</div><span>▶</span><div>10 s timer runs</div><span>▶</span><div class="x">Timeout!</div><span>▶</span><div>Local fallback picks the result</div><span>▶</span><div>Chain continues, chai decided</div></div>
+ <p>If Wi-Fi, an API, Telegram or a sensor stalls for more than 10 seconds, the ESP32 picks the result itself so the chai decision is never stuck.</p></section>
+
+<section id="team"><h2>Team</h2><div class="card" id="tm"></div></section>
+</main>
+<footer id="ft"></footer>
+
+<script>
+/* ===== EDIT ME: team details ===== */
+const CFG={team:"NullByte",members:["Suhail","Mahammadkaif Shaikh","Mahek Banu","Abida Khanum"],college:"Bearys Institute of Technology",event:"Mad Hacks · Over-Engineered Solutions",ourCost:"Rs 2,000-2,500"};
+
+/* ===== EDIT ME: stages ===== */
+const STAGES=[null,{n:"Input",c:"#FFD60A"},{n:"Cloud and Decision",c:"#22D3EE"},{n:"Human Approval",c:"#D95CE8"},{n:"Mechanical Chain",c:"#4ADE80"},{n:"Result",c:"#FB923C"}];
+const stageOf=n=>n<=2?1:n<=8?2:n<=10?3:n<=18?4:5;
+
+/* ===== EDIT ME: the 21 steps [short label, device, description] ===== */
+const STEPS=[
+["Press","Human + Button 1","Human presses Button 1 (GPIO 4) to start."],
+["Wake","ESP32 #1","ESP32 #1 wakes up and debounces the input."],
+["Publish","ESP32 #1 + MQTT","Request is published to the free HiveMQ public broker."],
+["Receive","Node-RED","Node-RED receives the MQTT message."],
+["API 1","Node-RED + HTTP","Fetches a random number from free API #1."],
+["API 2","Node-RED + HTTP","Fetches a random number from free API #2."],
+["HW RNG","ESP32 #1","ESP32 hardware random number generator adds a third value."],
+["Vote","Node-RED function","3-way majority vote. Left = Person A pays, Right = Person B pays."],
+["Telegram","Telegram Bot","Result is sent to a Telegram bot (made with BotFather)."],
+["Approve","Friends + Telegram","Friends tap Approve in Telegram."],
+["Command","ESP32 #2 + MQTT","ESP32 #2 receives the approved command through MQTT."],
+["Release","Servo A","Servo A releases the marble."],
+["Roll","Marble + track","Marble rolls down the track."],
+["Gate","Servo B","Servo B (gate) routes the marble left or right based on the vote."],
+["IR 1","IR Sensor 1","IR Sensor 1 confirms the marble took the chosen path."],
+["Continue","Marble + track","Marble continues to the lever."],
+["IR 2","IR Sensor 2","IR Sensor 2 detects the marble reached the lever."],
+["Ding","Servo C + bell","Servo C swings the lever and the bell rings."],
+["Winner","OLED","OLED shows PERSON A PAYS or PERSON B PAYS."],
+["Score","OLED","Step counter and complexity score: 21 steps instead of 1."],
+["Chai","Humans","Done. Someone buys the chai."]];
+
+/* ===== EDIT ME: components [name, qty, role, price text, low, high (total Rs), steps, emoji] ===== */
+const COMPS=[
+["ESP32 DevKit",2,"#1 = Controller (button, OLED, MQTT publish). #2 = Mechanism (servos, IR, bell). Both on Wi-Fi.","Rs 450-600 each",900,1200,"1-3, 7, 11, 19-20","🧠"],
+["SG90 Micro Servo",3,"A = marble release. B = gate (left/right). C = lever that rings the bell.","Rs 100-150 each",300,450,"12, 14, 18","⚙️"],
+["IR Obstacle Sensor",2,"IR 1 confirms the chosen path. IR 2 confirms the marble reached the lever.","Rs 50 each",100,100,"15, 17","👁️"],
+["0.96in I2C OLED (SSD1306)",1,"Live step counter, winner and complexity score.","Rs 250",250,250,"19, 20","📟"],
+["Push Button",2,"Button 1 starts the process. Button 2 resets.","Rs 10 each",20,20,"1","🔘"],
+["Active Buzzer / Small Bell",1,"Rings at the end to announce the loser.","Rs 20-50",20,50,"18","🔔"],
+["LEDs + resistors",1,"One LED lights up per stage group.","Rs 100",100,100,"1-21","💡"],
+["Breadboard + jumper wires","2 + set","Circuit connections.","Rs 350",350,350,"all","🔌"],
+["5V 2A adapter / power bank",1,"Powers the servos separately (prevents ESP32 reset).","Rs 300",300,300,"12, 14, 18","🔋"],
+["Marbles + cardboard track","-","Physical marble run with a left/right gate.","Rs 230",230,230,"13, 14, 16","🔮"]];
+const SOFT=["Arduino IDE","Node-RED","MQTT (HiveMQ public broker)","Telegram Bot (BotFather)","2 free random-number APIs","Wi-Fi hotspot"];
+
+/* ===== EDIT ME: pins ===== */
+const PINS1=[["Button 1 (start)","GPIO 4"],["Button 2 (reset)","GPIO 5"],["OLED SDA","GPIO 21"],["OLED SCL","GPIO 22"],["Status LEDs","GPIO 25, 26, 27, 32, 33"]];
+const PINS2=[["Servo A (release)","GPIO 13"],["Servo B (gate)","GPIO 12"],["Servo C (lever)","GPIO 14"],["IR 1","GPIO 34"],["IR 2","GPIO 35"],["Buzzer / bell","GPIO 18"]];
+
+/* ===== EDIT ME: judging checklist ===== */
+const CHECKS=["Simple everyday task: deciding who pays for chai","Solved in the most complicated way: 21 steps, 2 microcontrollers, 2 APIs, cloud broker, chat bot, mechanical marble run","Task still finishes start to end: guaranteed result with a timeout fallback","Complexity shown: flow diagram + live step counter + complexity score","Free tools only: Arduino IDE, Node-RED, Telegram, HiveMQ"];
+
+/* ===================== code ===================== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const NS="http://www.w3.org/2000/svg",RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* --- flow diagram --- */
+const NX=i=>70+i*110,NY=130,FW=NX(20)+70;
+let sv=`<svg id="flow" viewBox="0 0 ${FW} 270" width="${FW}" height="270" role="img" aria-label="21 step flow diagram">`;
+for(let k=1;k<=5;k++){const ix=STEPS.map((_,i)=>i).filter(i=>stageOf(i+1)===k),x0=NX(ix[0])-50,x1=NX(ix[ix.length-1])+50;
+ sv+=`<rect x="${x0}" y="10" width="${x1-x0}" height="250" rx="14" fill="${STAGES[k].c}" fill-opacity=".12" stroke="${STAGES[k].c}" stroke-width="2" stroke-dasharray="6 5"/><text x="${x0+10}" y="34" fill="${STAGES[k].c}" font-weight="800" font-size="15">Stage ${k}: ${STAGES[k].n}</text>`}
+for(let i=0;i<20;i++)sv+=`<line id="l${i}" x1="${NX(i)+28}" x2="${NX(i+1)-28}" y1="${NY}" y2="${NY}" stroke="#51445f" stroke-width="5"/>`;
+STEPS.forEach((s,i)=>{sv+=`<g class="node" id="n${i}" data-i="${i}" tabindex="0" role="button" aria-label="Step ${i+1}: ${s[0]}" style="--col:${STAGES[stageOf(i+1)].c}"><circle cx="${NX(i)}" cy="${NY}" r="27"/><text class="num" x="${NX(i)}" y="${NY+7}" text-anchor="middle">${i+1}</text><text class="lab" x="${NX(i)}" y="${NY+58}" text-anchor="middle">${s[0]}</text></g>`});
+sv+=`<circle id="dot" r="9" fill="#fff" cx="-40" cy="${NY}" opacity="0"/></svg>`;
+$("#scr").innerHTML=sv;
+function tip(i){const s=STEPS[i];$("#tip").style.borderColor=STAGES[stageOf(i+1)].c;$("#tip").innerHTML=`<b>Step ${i+1}: ${s[0]}</b> (Stage ${stageOf(i+1)}: ${STAGES[stageOf(i+1)].n})<br>Component: <b>${s[1]}</b><br>${s[2]}`}
+$$(".node").forEach(n=>{const i=+n.dataset.i;n.onmouseenter=n.onfocus=n.onclick=()=>tip(i);n.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tip(i)}}});
+
+/* --- marble run svg --- */
+const P={s:[40,40],g:[140,95],iL:[70,175],iR:[210,175],bL:[70,255],bR:[210,255],lv:[140,295]};
+$("#mar").innerHTML=`<g stroke="#888" stroke-width="6" fill="none" stroke-linecap="round"><path d="M40 55 L140 95"/><path d="M140 95 L70 175 L70 255 L140 295"/><path d="M140 95 L210 175 L210 255 L140 295"/></g>
+<rect id="sa" x="12" y="14" width="56" height="24" rx="5" fill="#4ADE80"/><text x="40" y="31" text-anchor="middle" font-size="11" font-weight="800">Servo A</text>
+<line id="gate" x1="140" y1="95" x2="140" y2="125" stroke="#D95CE8" stroke-width="8" stroke-linecap="round"/><text x="140" y="85" text-anchor="middle" font-size="11" fill="#D95CE8" font-weight="800">Gate</text>
+<rect id="i1" x="40" y="168" width="14" height="14" fill="#555"/><rect id="i2" x="132" y="272" width="14" height="14" fill="#555"/><text x="30" y="205" fill="#aaa" font-size="11">IR 1</text><text x="150" y="268" fill="#aaa" font-size="11">IR 2</text>
+<text x="20" y="130" fill="#FFD60A" font-size="12" font-weight="800">A pays</text><text x="225" y="130" fill="#FFD60A" font-size="12" font-weight="800">B pays</text>
+<g id="lever"><line x1="140" y1="305" x2="195" y2="305" stroke="#22D3EE" stroke-width="8" stroke-linecap="round"/></g><text id="bell" x="215" y="318" font-size="26">🔔</text><text id="ding" x="150" y="345" font-size="30" font-weight="900" fill="#FFD60A" opacity="0">DING!</text>
+<circle id="mb" r="9" cx="40" cy="40" fill="#ff5a5a" stroke="#fff" stroke-width="2" opacity="0"/>`;
+
+/* --- engine --- */
+let run=0,running=false,S={},t0=0;
+const sleep=t=>new Promise(r=>setTimeout(r,t)),ms=()=>700/+$("#spd").value;
+function anim(el,a,b,t,id){return new Promise(res=>{const set=p=>{el.setAttribute("cx",a[0]+(b[0]-a[0])*p);el.setAttribute("cy",a[1]+(b[1]-a[1])*p)};if(RM||t<=0){set(1);return res()}const s=performance.now();(function f(now){if(id!==run)return res();const p=Math.min(1,(now-s)/t);set(p);p<1?requestAnimationFrame(f):res()})(s)})}
+const clock=()=>new Date().toLocaleTimeString([],{hour12:false});
+function log(n,t){const d=document.createElement("div");d.innerHTML=`<span>${clock()}</span> [Step ${n}] ${t}`;$("#log").appendChild(d);$("#log").scrollTop=1e5}
+function oled(a,b,w){$("#oled").innerHTML=`<div>${a}</div><div class="${w?'w':''}">${b}</div>`}
+function chat(t,me){const d=document.createElement("div");d.className="msg"+(me?" me":"");d.textContent=t;$("#chat").appendChild(d)}
+const side=()=>S.w==="L"?"LEFT":"RIGHT",who=()=>S.w==="L"?"PERSON A PAYS":"PERSON B PAYS";
+const LG={1:()=>"Human pressed Button 1 (GPIO 4)",2:()=>"ESP32 #1 woke up, debounce 50 ms OK",3:()=>"Published to broker.hivemq.com, topic chai/request",4:()=>"Node-RED received the MQTT message",
+5:()=>`Node-RED fetched random number from API #1 = ${S.a.toFixed(2)}`,6:()=>`Node-RED fetched random number from API #2 = ${S.b.toFixed(2)}`,7:()=>`ESP32 hardware RNG added third value = ${S.c.toFixed(2)}`,
+8:()=>`Majority vote ${S.v.join(",")} -> ${side()} (${who()})${S.forced?" [forced]":""}`,9:()=>"Result sent to Telegram bot, waiting for friends",
+11:()=>"ESP32 #2 received APPROVED command via MQTT",12:()=>"Servo A turned 90 degrees, marble released",13:()=>"Marble rolling down the track",14:()=>`Servo B gate set to ${side()}`,
+15:()=>"IR Sensor 1 triggered: marble is on the chosen path",16:()=>"Marble continues to the lever",17:()=>"IR Sensor 2 triggered: marble reached the lever",18:()=>"Servo C swung the lever, bell rings: DING!",
+19:()=>`OLED shows: ${who()}`,20:()=>"OLED shows: 21 steps instead of 1 (21x overkill)",21:()=>"Done. Someone buys the chai."};
+function reset(){run++;running=false;S={};$("#go").disabled=false;$$(".node").forEach(n=>n.classList.remove("on","done"));$$("#flow line").forEach(l=>l.classList.remove("lit"));
+ $("#dot").setAttribute("opacity",0);$("#cnt").textContent="Step 0 / 21";$("#log").innerHTML="";$("#chat").innerHTML="";$("#ok").disabled=true;oled("STEP 00/21","READY");
+ $("#mb").setAttribute("opacity",0);$("#ding").setAttribute("opacity",0);$("#gate").removeAttribute("transform");$("#lever").removeAttribute("transform");$("#bell").removeAttribute("transform");
+ ["i1","i2"].forEach(x=>$("#"+x).setAttribute("fill","#555"));$("#scr").scrollTo({left:0});$("#tip").textContent="Press START to begin. Hover a node for details."}
+function flash(id){const e=$("#"+id);e.setAttribute("fill","#ff2b2b");setTimeout(()=>e.setAttribute("fill","#555"),600)}
+async function step(i,id){
+ const n=i+1,t=ms(),mb=$("#mb");
+ $$(".node.on").forEach(x=>x.classList.replace("on","done"));$("#n"+i).classList.add("on");if(i>0)$("#l"+(i-1)).classList.add("lit");
+ $("#scr").scrollTo({left:NX(i)-320,behavior:RM?"auto":"smooth"});tip(i);$("#cnt").textContent=`Step ${n} / 21`;
+ if(n===5)S.a=Math.random();if(n===6)S.b=Math.random();if(n===7)S.c=Math.random();
+ if(n===8){S.v=[S.a,S.b,S.c].map(x=>x<.5?"L":"R");S.w=S.v.filter(x=>x==="L").length>=2?"L":"R";const f=$("#frc").value;S.forced=f!=="R";if(S.forced)S.w=f==="L"?"L":"R"}
+ oled(`STEP ${String(n).padStart(2,"0")}/21`,n<19?STAGES[stageOf(n)].n.toUpperCase():n===19?who():n===20?"21 steps instead of 1":"CHAI TIME!",n>=19);
+ if(n!==10)log(n,LG[n]());
+ if(i>0)anim($("#dot"),[NX(i-1),NY],[NX(i),NY],t*.8,id),$("#dot").setAttribute("opacity",1);
+ const L=S.w==="L",m=L?P.bL:P.bR,ir=L?P.iL:P.iR,ib=L?"i1":"i1";
+ if(n===9)chat(`Chai bot: vote result is ${side()} (${who()}). Approve?`);
+ if(n===10){$("#ok").disabled=false;log(10,"Waiting for friends to tap Approve (10 s timeout)");
+  const ok=await new Promise(r=>{const k=()=>{$("#ok").disabled=true;r(true)};$("#ok").onclick=()=>{chat("Approve",true);log(10,"Friend tapped Approve in Telegram");k()};setTimeout(()=>{if(id===run&&!$("#ok").disabled){log(10,"Timeout: fallback auto-approved locally");k()}},10000/(+$("#spd").value))});
+  if(id!==run)return}
+ if(n===12){mb.setAttribute("opacity",1);mb.setAttribute("cx",P.s[0]);mb.setAttribute("cy",P.s[1]);$("#sa").setAttribute("fill","#FFD60A")}
+ if(n===13)await anim(mb,P.s,P.g,t*.9,id);
+ if(n===14)$("#gate").setAttribute("transform",`rotate(${L?-35:35} 140 95)`);
+ if(n===15){await anim(mb,P.g,ir,t*.8,id);flash("i1")}
+ if(n===16)await anim(mb,ir,m,t*.9,id);
+ if(n===17){await anim(mb,m,P.lv,t*.8,id);flash("i2")}
+ if(n===18){$("#lever").setAttribute("transform","rotate(-25 140 305)");$("#bell").setAttribute("transform","rotate(20 227 310)");$("#ding").setAttribute("opacity",1)}
+ if(n!==13&&n!==15&&n!==16&&n!==17)await sleep(t);
+ if(id!==run)return;
+ if(n===21){$("#n20").classList.replace("on","done");running=false;$("#go").disabled=false}
+}
+async function start(){if(running)return;reset();running=true;$("#go").disabled=true;const id=run;t0=Date.now();
+ for(let i=0;i<21;i++){await step(i,id);if(id!==run)return}}
+$("#go").onclick=start;$("#rs").onclick=reset;reset();
+/* the select for Force Right uses value X; normalise */
+$("#frc").onchange=()=>{};
+S={};
+
+/* --- components --- */
+const ico=e=>`<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="3" y="3" width="58" height="58" rx="12" fill="#FFD60A" stroke="#000" stroke-width="4"/><text x="32" y="43" text-anchor="middle" font-size="30">${e}</text></svg>`;
+$("#cg").innerHTML=COMPS.map(c=>`<div class="flip" tabindex="0" onclick="this.classList.toggle('t')"><div class="fi"><div class="card">${ico(c[7])}<h3>${c[0]}</h3><p><b>Qty:</b> ${c[1]}</p><p>${c[2]}</p><div class="pr">${c[3]}</div></div><div class="card bk"><h3>Used in steps</h3><div class="stat" style="font-size:2.2rem">${c[6]}</div><p>${c[0]} x ${c[1]}</p></div></div></div>`).join("");
+const lo=COMPS.reduce((a,c)=>a+c[4],0),hi=COMPS.reduce((a,c)=>a+c[5],0);
+$("#tot").innerHTML=`Listed parts total: <b class="pr">Rs ${lo.toLocaleString("en-IN")} - ${hi.toLocaleString("en-IN")}</b><br>Our approximate spend: <b class="pr">${CFG.ourCost}</b> <small>(borrowed lab kits and parts we already own)</small>`;
+$("#sb").innerHTML=SOFT.map((s,i)=>`<span class="badge" style="background:${["#FFD60A","#22D3EE","#D95CE8","#4ADE80","#FB923C","#FFD60A"][i%6]}">${s}</span>`).join("");
+
+/* --- block diagram --- */
+const B={btn:["Button 1",10,30,"#FFD60A"],e1:["ESP32 #1",190,30,"#22D3EE"],mq:["MQTT Broker",370,30,"#D95CE8"],nr:["Node-RED",550,30,"#4ADE80"],tg:["Telegram",730,30,"#FB923C"],oled:["OLED",190,160,"#FFD60A"],
+e2:["ESP32 #2",370,160,"#22D3EE"],sa:["Servo A",190,290,"#4ADE80"],sb:["Servo B",340,290,"#4ADE80"],sc:["Servo C",490,290,"#4ADE80"],ir1:["IR 1",650,200,"#D95CE8"],ir2:["IR 2",650,290,"#D95CE8"],bell:["Bell",790,245,"#FB923C"],psu:["5V 2A supply",10,290,"#FFD60A"]};
+const LK=[["btn","e1"],["e1","oled"],["e1","mq"],["mq","nr"],["nr","tg"],["mq","e2"],["e2","sa"],["e2","sb"],["e2","sc"],["e2","ir1"],["e2","ir2"],["e2","bell"],["psu","sa"],["psu","sb"],["psu","sc"]];
+const cx=k=>B[k][1]+65,cy=k=>B[k][2]+25;let bs="";
+LK.forEach(l=>bs+=`<line x1="${cx(l[0])}" y1="${cy(l[0])}" x2="${cx(l[1])}" y2="${cy(l[1])}" stroke="${l[0]==="psu"?"#FFD60A":"#8b7ca0"}" stroke-width="3" ${l[0]==="psu"?'stroke-dasharray="6 5"':""}/>`);
+for(const k in B)bs+=`<rect x="${B[k][1]}" y="${B[k][2]}" width="130" height="50" rx="10" fill="${B[k][3]}" stroke="#000" stroke-width="4"/><text x="${cx(k)}" y="${cy(k)+6}" text-anchor="middle" font-weight="800" font-size="15" fill="#000">${B[k][0]}</text>`;
+if(!RM)LK.forEach((l,i)=>bs+=`<circle r="6" fill="#fff"><animateMotion dur="${2+i%3*.7}s" begin="${i*.3}s" repeatCount="indefinite" path="M${cx(l[0])} ${cy(l[0])} L${cx(l[1])} ${cy(l[1])}"/></circle>`);
+$("#blk").innerHTML=bs;
+const tbl=(t,r)=>`<table><tr><th colspan="2">${t}</th></tr>${r.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("")}</table>`;
+$("#p1").innerHTML=tbl("ESP32 #1 (Controller)",PINS1);$("#p2").innerHTML=tbl("ESP32 #2 (Mechanism)",PINS2);
+
+/* --- software layers --- */
+$("#lay").innerHTML=[["Device layer","2 x ESP32 (Controller + Mechanism)","#22D3EE"],["Network layer","Wi-Fi hotspot + MQTT (HiveMQ public broker)","#4ADE80"],["Logic layer","Node-RED flow: 2 APIs + hardware RNG, majority vote","#FFD60A"],["Human layer","Telegram bot: friends approve","#D95CE8"],["Result layer","OLED winner screen + bell","#FB923C"]].map((l,i)=>`<div class="layer" style="background:${l[2]};margin-left:${i*2}%"><b>${l[0]}:</b> ${l[1]}</div>`).join("");
+
+/* --- checklist + meter + counters + reveal --- */
+$("#ck").innerHTML=CHECKS.map(c=>`<div class="card chk"><span class="t">✓</span>${c}</div>`).join("");
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;io.unobserve(e.target);const t=e.target;
+ if(t.classList.contains("chk"))t.classList.add("in");
+ if(t.id==="mt")t.style.width="100%";
+ if(t.dataset.count){const to=+t.dataset.count,s=performance.now();(function f(n){const p=Math.min(1,(n-s)/1200);t.textContent=Math.round(to*p);if(p<1)requestAnimationFrame(f)})(s)}}),{threshold:.4});
+$$(".chk,#mt,[data-count]").forEach(e=>io.observe(e));
+
+/* --- team --- */
+$("#tm").innerHTML=`<h3>${CFG.team}</h3><p>${CFG.members.map(m=>`<span class="badge" style="margin:4px;background:#22D3EE">${m}</span>`).join("")}</p><p>${CFG.college}<br>${CFG.event}</p>`;
+$("#ft").textContent=`${CFG.team} | ${CFG.college} | ${CFG.event} | One coin flip. Twenty-one steps. Zero reason.`;
+
+/* --- presentation mode --- */
+function pres(on){document.body.classList.toggle("pres",on);if(on){$("#sim").scrollIntoView();$("#sim").requestFullscreen?.().catch(()=>{})}else if(document.fullscreenElement)document.exitFullscreen()}
+$("#pbtn").onclick=()=>pres(!document.body.classList.contains("pres"));
+addEventListener("keydown",e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key==="p"||e.key==="P")pres(!document.body.classList.contains("pres"));if(e.key==="Escape"&&document.body.classList.contains("pres"))pres(false)});
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)document.body.classList.remove("pres")});
+</script>
+<script>
+(function(){const f=document.getElementById('v3f'),box=document.getElementById('v3');let loaded=false;
+ function load(){if(loaded)return;loaded=true;f.srcdoc=document.getElementById('v3src').textContent.replace(/<\\\/script/g,'</script').replace(/<\\!--/g,'<!--')}
+ new IntersectionObserver(es=>{if(es[0].isIntersecting)load()},{rootMargin:'300px'}).observe(box);
+ const fsb=document.getElementById('v3fs'),inFs=()=>document.fullscreenElement||document.webkitFullscreenElement;
+ const lbl=()=>{fsb.textContent=inFs()||box.classList.contains('fsfake')?'Exit full screen':'Full screen 3D'};
+ function fake(on){box.classList.toggle('fsfake',on);document.documentElement.style.overflow=on?'hidden':'';lbl()}
+ async function toggle(){if(box.classList.contains('fsfake')){fake(false);return}
+  if(inFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+  const rq=box.requestFullscreen||box.webkitRequestFullscreen;try{if(!rq)throw 0;await rq.call(box)}catch(e){fake(true)}}
+ fsb.onclick=toggle;document.getElementById('v3x').onclick=toggle;
+ document.addEventListener('fullscreenchange',lbl);document.addEventListener('webkitfullscreenchange',lbl);
+ addEventListener('keydown',e=>{if(e.key==='Escape'&&box.classList.contains('fsfake'))fake(false)});
+})();
+</script>
+</body>
+</html>
